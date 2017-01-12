@@ -1,2 +1,2 @@
 # rts
-Real Time Strategy Games
+Real Time Strategy Game
