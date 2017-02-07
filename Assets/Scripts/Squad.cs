@@ -4,6 +4,15 @@ using System.Collections.Generic;
 
 public class Squad : MonoBehaviour, LockStep {
 
+    private int playerIndex = -1;
+
+    protected enum SQUAD_STATES
+    {
+        IDLE,
+        MOVE_TO_TARGET,
+        CHASE_SQUAD
+    }
+
     List<GameObject> units = new List<GameObject>();
 
     // Add Circle Collider as look sense
@@ -24,7 +33,8 @@ public class Squad : MonoBehaviour, LockStep {
 
     public void LockStepUpdate()
     {
-
+        foreach (GameObject unit in units)
+            unit.GetComponent<Unit>().LockStepUpdate();
     }
 
     public void AddUnit(GameObject newUnit)

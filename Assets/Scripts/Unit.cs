@@ -13,11 +13,9 @@ public class Unit : MonoBehaviour, LockStep {
 
     private UNIT_STATES currentState = UNIT_STATES.IDLE;
 
-    int curHitpoints = 2;
+    int hitpoints = 2;
 
     Squad parentSquad;
-
-    float deathAnimLength = 1f;
 
 	void Start ()
     {
@@ -27,14 +25,17 @@ public class Unit : MonoBehaviour, LockStep {
     void SetSquad(Squad squad)
     {
         parentSquad = squad;
-        curHitpoints = squad.unitMaxHitpoints;
+        hitpoints = squad.unitMaxHitpoints;
     }
 	
     void Update()
     {
-        HandleCurrentState();
-
         // Do Slerp movement
+    }
+
+    public void LockStepUpdate()
+    {
+        HandleCurrentState();
     }
 
     void HandleCurrentState()
@@ -68,32 +69,39 @@ public class Unit : MonoBehaviour, LockStep {
 
     }
 
-    public void LockStepUpdate()
+    void Idle()
     {
-        // Update movement
+        currentState = UNIT_STATES.IDLE;
+    }
 
+    void Move()
+    {
+        currentState = UNIT_STATES.MOVING;
+
+        // Trigger move anim
     }
 
     void Attack()
     {
+        currentState = UNIT_STATES.ATTACKING;
+
         // Trigger attack anim
     }
 
     void Damage(int damageValue)
     {
-        hp -= damageValue;
+        hitpoints -= damageValue;
 
-        // TODO play damaged anim
-
-        if (0 <= 0)
+        if (hitpoints <= 0)
             Kill();
     }
 
      void Kill()
     {
-        currentState = UNIT_STATES.DYING;
         parentSquad.RemoveUnit(gameObject);
-        Invoke("Destroy", deathAnimLength);
+        currentState = UNIT_STATES.DYING;
+        // Trigger Kill animation
+        Invoke("Destroy", 1f); // TODO: get death anim duration
     }
 
     void Destroy()
