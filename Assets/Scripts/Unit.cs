@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Unit : MonoBehaviour, LockStep {
+public class Unit : MonoBehaviour, LockStep
+{
 
     protected enum UNIT_STATES
     {
@@ -11,23 +12,23 @@ public class Unit : MonoBehaviour, LockStep {
         DYING
     }
 
-    private UNIT_STATES currentState = UNIT_STATES.IDLE;
+    private UNIT_STATES currentState = UNIT_STATES.MOVING;
 
     int hitpoints = 2;
 
     Squad parentSquad;
 
-	void Start ()
+    void Start()
     {
 
-	}
+    }
 
     void SetSquad(Squad squad)
     {
         parentSquad = squad;
         hitpoints = squad.unitMaxHitpoints;
     }
-	
+
     void Update()
     {
         // Do Slerp movement
@@ -36,11 +37,14 @@ public class Unit : MonoBehaviour, LockStep {
     public void LockStepUpdate()
     {
         HandleCurrentState();
+        // HandleMovement()
+        // Collision Detection
+        // Move()
     }
 
     void HandleCurrentState()
     {
-        switch(currentState)
+        switch (currentState)
         {
             case UNIT_STATES.IDLE: HandleIdling(); break;
             case UNIT_STATES.MOVING: HandleMoving(); break;
@@ -96,7 +100,7 @@ public class Unit : MonoBehaviour, LockStep {
             Kill();
     }
 
-     void Kill()
+    void Kill()
     {
         parentSquad.RemoveUnit(gameObject);
         currentState = UNIT_STATES.DYING;
