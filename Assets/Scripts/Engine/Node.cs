@@ -5,6 +5,7 @@ public class Node : IHeapItem<Node>
 {
     public Node parent;
     public Vector2 worldPosition;
+    public FPoint _FworldPosition;
     public int gridPosX;
     public int gridPosY;
     int heapIndex;
@@ -22,12 +23,17 @@ public class Node : IHeapItem<Node>
 
     public Node(bool _walkable, Vector2 _worldPosition, int _gridPosX, int _gridPosY)
     {
+        walkable = _walkable;
+
         // Perfect rounding
         decimal dPosX = System.Math.Round((decimal)_worldPosition.x, 2);
         decimal dPosY = System.Math.Round((decimal)_worldPosition.y, 2);
 
-        walkable = _walkable;
         worldPosition = new Vector2((float)dPosX, (float)dPosY);
+        FInt Fx = FInt.FromParts((int)dPosX, (int)((dPosX - (int)dPosX) * 1000));
+        FInt Fy = FInt.FromParts((int)dPosY, (int)((dPosY - (int)dPosY) * 1000));
+        _FworldPosition = FPoint.Create(Fx, Fy);
+
         gridPosX = _gridPosX;
         gridPosY = _gridPosY;
 

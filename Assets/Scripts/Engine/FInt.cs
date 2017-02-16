@@ -513,4 +513,14 @@ public struct FPoint
             return F;
     }
     #endregion
+
+    public static FPoint Normalize(FPoint A)
+    {
+        FInt distance = Sqrt(A.X * A.X + A.Y * A.Y);
+
+        if(distance != 0)
+            return FPoint.Create(A.X / distance, A.Y / distance);
+        else
+            return FPoint.Create(FInt.Create(0), FInt.Create(0));
+    }
 }

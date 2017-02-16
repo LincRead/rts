@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 public class Squad : MonoBehaviour, LockStep {
 
+    [Header("Unit types")]
+    public GameObject unitPrefab;
+
     private int playerIndex = -1;
 
     protected enum SQUAD_STATES
@@ -13,55 +16,92 @@ public class Squad : MonoBehaviour, LockStep {
         CHASE_SQUAD
     }
 
-    List<GameObject> units = new List<GameObject>();
+    protected SQUAD_STATES state = SQUAD_STATES.IDLE;
 
     // Add Circle Collider as look sense
 
+    [Header("Units")]
     public int unitMaxHitpoints = 2;
     public int unitAttackDamage = 1;
-    public float unitMoveSpeed = 1f;
+    public FInt unitMoveSpeed = FInt.FromParts(0, 500);
+    List<GameObject> units = new List<GameObject>();
 
-    // Pathfinding
     [HideInInspector]
-    public List<Node> path = new List<Node>();
-    protected Grid grid = null;
-    protected Node currentStandingOnNode;
-    protected Node startNode;
-    protected Node destinationNode;
+    public FPoint positionReal;
+    Pathfinding pathFinding;
+    List<Node> path;
+    int currentWaypointTarget = 0;
 
     void Start ()
     {
-        SetupPathfinding();
-    }
+        pathFinding = GetComponent<Pathfinding>();
 
-    void SetupPathfinding()
-    {
-        GameObject gridObj = GameObject.FindGameObjectWithTag("Grid");
-
-        if (gridObj)
-            grid = gridObj.GetComponent<Grid>();
+        GameObject newUnit = Instantiate(unitPrefab, GetRealPosToVector3(), Quaternion.identity) as GameObject;
+        AddUnit(newUnit);
     }
 
     void Update ()
     {
-        DetectCurrentPathfindingNode();
+        pathFinding.DetectCurrentPathfindingNode(new Vector2(positionReal.X.ToFloat(), positionReal.Y.ToFloat()));
 
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
+            currentWaypointTarget = 0;
             Vector2 mousePos = Input.mousePosition;
-            FindPath(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            path = pathFinding.FindPath(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            state = SQUAD_STATES.MOVE_TO_TARGET;
         }
+
+        SmoothMovement();
+    }
+
+    float lerpTime = 1f;
+    float currentLerpTime;
+    void SmoothMovement()
+    {
+        transform.position = Vector3.Lerp(
+            transform.position,
+            GetRealPosToVector3(), 
+            Time.deltaTime * 5);
     }
 
     public void LockStepUpdate()
     {
+        currentLerpTime = 0.0f;
+
+        switch (state)
+        {
+            case SQUAD_STATES.IDLE: HandleIdle(); break;
+            case SQUAD_STATES.MOVE_TO_TARGET: HandleMoveToTarget(); break;
+            case SQUAD_STATES.CHASE_SQUAD: HandleChaseSquad(); break;
+        }
+
         foreach (GameObject unit in units)
             unit.GetComponent<Unit>().LockStepUpdate();
+    }
+
+    void HandleIdle()
+    {
+
+    }
+
+    void HandleMoveToTarget()
+    {
+        if (path != null && path.Count > 0)
+        {
+            FollowPath();
+        }
+    }
+
+    void HandleChaseSquad()
+    {
+
     }
 
     public void AddUnit(GameObject newUnit)
     {
         units.Add(newUnit);
+        newUnit.GetComponent<Unit>().SetSquad(this);
     }
 
     public void RemoveUnit(GameObject unitToRemove)
@@ -69,116 +109,38 @@ public class Squad : MonoBehaviour, LockStep {
         units.Remove(unitToRemove);
     }
 
-    void DetectCurrentPathfindingNode()
+    void FollowPath()
     {
-        Node node = grid.GetNodeFromWorldPoint(transform.position);
+        Node currTargetNode = path[currentWaypointTarget];
 
-        // Outside grid
-        if (node == null)
+        // Reached target
+        if (currTargetNode.gridPosX == pathFinding.currentStandingOnNode.gridPosX
+            && currTargetNode.gridPosY == pathFinding.currentStandingOnNode.gridPosY)
         {
-            Debug.LogError(name + " is standing outside grid");
-            return;
-        }
-
-        // Standing on another node than currently stored
-        if (currentStandingOnNode != node)
-        {
-            // Clear the previous node this controller was standing on
-            if (currentStandingOnNode != null)
+            currentWaypointTarget++;
+            if (currentWaypointTarget >= path.Count)
             {
-                currentStandingOnNode.squadStandingHere = false;
-            }
-
-            // Store the node this controller is currently standing on
-            currentStandingOnNode = node;
-            node.squadStandingHere = true;
-        }
-    }
-
-    protected void FindPath(Vector2 endPos)
-    {
-        // Find start and destination nodes
-        Node newDestinationNode = grid.GetNodeFromWorldPoint(endPos);
-
-        if (newDestinationNode == null)
-            return;
-
-        // Set new destination node
-        if (newDestinationNode != destinationNode)
-        {
-            startNode = currentStandingOnNode;
-            destinationNode = newDestinationNode;
-        }
-
-        else
-            // Same as before, so don't have to find new path
-            return;
-
-        Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
-        HashSet<Node> closedSet = new HashSet<Node>();
-        openSet.Add(startNode);
-
-        while (openSet.Count > 0)
-        {
-            Node currentNode = openSet.RemoveFirst();
-            closedSet.Add(currentNode);
-
-            if (currentNode == destinationNode)
-            {
-                RetracePath(startNode, destinationNode);
+                state = SQUAD_STATES.IDLE;
                 return;
             }
-
-            List<Node> nodesToCheck = grid.GetNeighbours(currentNode);
-            foreach (Node neighbour in nodesToCheck)
-            {
-                if (closedSet.Contains(neighbour))
-                    continue;
-
-                int newMovementCostToNeighbour = currentNode.gCost + GetDistanceBetweenNodes(currentNode, neighbour);
-                if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
-                {
-                    neighbour.gCost = newMovementCostToNeighbour;
-                    neighbour.hCost = GetDistanceBetweenNodes(neighbour, destinationNode);
-                    neighbour.parent = currentNode;
-
-                    if (!openSet.Contains(neighbour))
-                        openSet.Add(neighbour);
-                }
-            }
-        }
-    }
-
-    void RetracePath(Node startNode, Node endNode)
-    {
-        grid.pathsToDebug.Remove(path);
-        path.Clear();
-
-        Node currentNode = endNode;
-
-        while (currentNode != startNode)
-        {
-            path.Add(currentNode);
-            currentNode = currentNode.parent;
         }
 
-        path.Reverse();
+        currTargetNode = path[currentWaypointTarget];
+        FInt directionX = currTargetNode._FworldPosition.X - positionReal.X;
+        FInt directionY = currTargetNode._FworldPosition.Y - positionReal.Y;
+        FPoint directionNorm = FPoint.Normalize(FPoint.Create(directionX, directionY));
 
-        grid.pathsToDebug.Add(path);
-    }
-
-    int GetDistanceBetweenNodes(Node nodeA, Node nodeB)
-    {
-        int distX = Mathf.Abs(nodeA.gridPosX - nodeB.gridPosX);
-        int distY = Mathf.Abs(nodeA.gridPosY - nodeB.gridPosY);
-
-        if (distX > distY)
-            return 14 * distY + 10 * (distX - distY);
-        return 14 * distX + 10 * (distY - distX);
+        positionReal.X += unitMoveSpeed * directionNorm.X;
+        positionReal.Y += unitMoveSpeed * directionNorm.Y;
     }
 
     public int GetSquadSize()
     {
         return units.Count;
+    }
+
+    public Vector3 GetRealPosToVector3()
+    {
+        return new Vector3(positionReal.X.ToFloat(), positionReal.Y.ToFloat());
     }
 }
