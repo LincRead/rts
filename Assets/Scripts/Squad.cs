@@ -38,18 +38,16 @@ public class Squad : FActor, LockStep {
 
         for (var i = 0; i < 5; i++)
         {
-            Vector2 pos = new Vector2((i % 5f) * 0.5f, (i % 2f) * 0.5f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.5f, transform.position.y + (i % 2f) * 0.5f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
-            newUnit.transform.SetParent(transform);
+            //newUnit.transform.SetParent(transform);
             AddUnit(newUnit.GetComponent<Unit>());
         }
     }
 
     void Update ()
     {
-        //GetComponent<SpriteRenderer>().sortingOrder = (int)(transform.position.y * 100);
-
         pathFinding.DetectCurrentPathfindingNode(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()));
 
         if(playerIndex == 0)
@@ -61,23 +59,11 @@ public class Squad : FActor, LockStep {
                 state = SQUAD_STATES.MOVE_TO_TARGET;
             }
 
-        SmoothMovement();
-    }
-
-    float lerpTime = 1f;
-    float currentLerpTime;
-    void SmoothMovement()
-    {
-        transform.position = Vector3.Lerp(
-            transform.position,
-            GetRealPosToVector3(), 
-            Time.deltaTime * 5);
+        transform.position = GetRealPosToVector3();
     }
 
     public override void LockStepUpdate()
     {
-        currentLerpTime = 0.0f;
-
         switch (state)
         {
             case SQUAD_STATES.IDLE: HandleIdle(); break;

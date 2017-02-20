@@ -37,18 +37,27 @@ public class Unit : FActor, LockStep
         SmoothMovement();
     }
 
+    float currentLerpTime = 0.0f;
     float lerpTime = 1f;
-    float currentLerpTime;
     void SmoothMovement()
     {
+        currentLerpTime += Time.deltaTime;
+        if (currentLerpTime >= lerpTime)
+            currentLerpTime = lerpTime;
+
+        float t = currentLerpTime / lerpTime;
+        t = Mathf.Sin(t * Mathf.PI * 0.5f);
+
         transform.position = Vector3.Lerp(
             transform.position,
             GetRealPosToVector3(),
-            Time.deltaTime * 5);
+            t
+        );
     }
 
     public override void LockStepUpdate()
     {
+        currentLerpTime = 0.0f;
         HandleCurrentState();
         // Collision Detection
         HandleAnimations();
@@ -85,21 +94,23 @@ public class Unit : FActor, LockStep
         
     }
 
-    // TEMP test functionality.
     void HandleMoving()
     {
-        FInt radius = FInt.FromParts(1, 0);
-        FInt seperationStrength = FInt.FromParts(1, 100);
-
         if (parentSquad.state == Squad.SQUAD_STATES.IDLE)
         {
-            if (FindDistanceToUnit(parentSquad.GetComponent<FActor>()) > 3)
+            // Todo: increase this as unit count increases
+            if (FindDistanceToUnit(parentSquad.GetComponent<FActor>()) > FInt.FromParts(2, 500))
                 MoveTowardsSquadLeader();
             else
                 Fvelocity = FPoint.Create();
 
             return;
         }
+
+        FInt radius = FInt.FromParts(0, 800);
+        FInt cohesionStrength = FInt.FromParts(1, 0);
+        FInt seperationStrength = FInt.FromParts(1, 100);
+        FInt alignmentStrength = FInt.FromParts(0, 600);
 
         List<FActor> actors = new List<FActor>(parentSquad.GetUnits());
         actors.Add(parentSquad.GetComponent<FActor>());
@@ -109,8 +120,8 @@ public class Unit : FActor, LockStep
         FPoint cohesion = ComputeCohesion(actors, radius);
         FPoint seperation = ComputeSeperation(actors, radius);
 
-        Fvelocity.X = cohesion.X * FInt.FromParts(1, 0) + seperation.X * seperationStrength + alignment.X;
-        Fvelocity.Y = cohesion.Y * FInt.FromParts(1, 0) + seperation.Y * seperationStrength + alignment.Y;
+        Fvelocity.X = cohesion.X * cohesionStrength + seperation.X * seperationStrength + alignment.X * alignmentStrength;
+        Fvelocity.Y = cohesion.Y * cohesionStrength + seperation.Y * seperationStrength + alignment.Y * alignmentStrength; ;
         Fvelocity = FPoint.Normalize(Fvelocity);
     }
 

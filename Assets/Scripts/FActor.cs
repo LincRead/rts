@@ -3,7 +3,6 @@ using System.Collections;
 
 public class FActor : MonoBehaviour, LockStep
 {
-
     protected FPoint Fpos;
     protected FPoint Fvelocity = FPoint.Create(FInt.Create(0), FInt.Create(0));
 

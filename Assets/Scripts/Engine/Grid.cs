@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class Grid : MonoBehaviour
 {
+    public LayerMask unwalkableMask;
+
     [Header("Size")]
     public int gridSizeX;
     public int gridSizeY;
@@ -51,7 +53,17 @@ public class Grid : MonoBehaviour
             {
                 // Calculate offset for each node
                 Vector3 worldPoint = gridWorldBottomLeftPos + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.up * (y * nodeDiameter + nodeRadius);
-                nodes[x, y] = new Node(true, worldPoint, x, y, this);
+
+                bool walkable = true;
+
+                if (Physics2D.OverlapArea(
+                    new Vector2(worldPoint.x - nodeRadius + 1, worldPoint.y + nodeRadius - 1),
+                    new Vector2(worldPoint.x + nodeRadius - 1, worldPoint.y - nodeRadius + 1),
+                    unwalkableMask))
+                    walkable = false;
+
+                nodes[x, y] = new Node(walkable, worldPoint, x, y, this);
+
             }
         }
     }
@@ -138,6 +150,8 @@ public class Grid : MonoBehaviour
             {
                 if (n.squadStandingHere)
                     Gizmos.color = new Color(1.0f, 0.0f, 1.0f, 0.5f);
+                else if(!n.walkable)
+                    Gizmos.color = new Color(1.0f, 0.0f, 0.0f, 0.5f);
                 else
                     Gizmos.color = new Color(0.0f, 1.0f, 0.0f, 0.5f);
 

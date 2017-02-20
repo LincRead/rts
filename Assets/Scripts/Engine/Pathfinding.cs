@@ -85,7 +85,7 @@ public class Pathfinding : MonoBehaviour {
             List<Node> nodesToCheck = grid.GetNeighbours(currentNode);
             foreach (Node neighbour in nodesToCheck)
             {
-                if (closedSet.Contains(neighbour))
+                if (!neighbour.walkable || closedSet.Contains(neighbour))
                     continue;
 
                 int newMovementCostToNeighbour = currentNode.gCost + GetDistanceBetweenNodes(currentNode, neighbour);
