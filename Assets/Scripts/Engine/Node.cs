@@ -20,8 +20,9 @@ public class Node : IHeapItem<Node>
     public bool squadStandingHere = false;
 
     public GameObject tilePrefab;
+    private Grid grid;
 
-    public Node(bool _walkable, Vector2 _worldPosition, int _gridPosX, int _gridPosY)
+    public Node(bool _walkable, Vector2 _worldPosition, int _gridPosX, int _gridPosY, Grid grid)
     {
         walkable = _walkable;
 
@@ -37,12 +38,16 @@ public class Node : IHeapItem<Node>
         gridPosX = _gridPosX;
         gridPosY = _gridPosY;
 
+        this.grid = grid;
+
         CreateTile();
     }
 
     public void CreateTile()
     {
-        GameObject.Instantiate(Resources.Load("Tiles/Grass Tile"), worldPosition, Quaternion.identity);
+        GameObject node = GameObject.Instantiate(Resources.Load("Tiles/Grass Tile"), worldPosition, Quaternion.identity) as GameObject;
+        node.transform.SetParent(grid.transform);
+
     }
 
     public int fCost

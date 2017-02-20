@@ -50,7 +50,6 @@ public class Unit : FActor, LockStep
     public override void LockStepUpdate()
     {
         HandleCurrentState();
-        HandleMovement();
         // Collision Detection
         HandleAnimations();
         ExecuteMovement();
@@ -102,7 +101,6 @@ public class Unit : FActor, LockStep
             return;
         }
 
-
         List<FActor> actors = new List<FActor>(parentSquad.GetUnits());
         actors.Add(parentSquad.GetComponent<FActor>());
         actors.Remove(this);
@@ -121,12 +119,12 @@ public class Unit : FActor, LockStep
         FPoint averageVelocity = FPoint.Create();
         int neighborCount = 0;
 
-        foreach (FActor unit in actors)
+        for(int i = 0; i < actors.Count; i++)
         {
-            if (FindDistanceToUnit(unit) < radius || unit == parentSquad.GetComponent<FActor>())
+            if (FindDistanceToUnit(actors[i]) < radius || actors[i] == parentSquad.GetComponent<FActor>())
             {
                 neighborCount++;
-                averageVelocity = FPoint.VectorAdd(averageVelocity, unit.GetComponent<FActor>().GetFVelocity());
+                averageVelocity = FPoint.VectorAdd(averageVelocity, actors[i].GetComponent<FActor>().GetFVelocity());
             }
         }
 
@@ -143,12 +141,12 @@ public class Unit : FActor, LockStep
         FPoint averagePosition = FPoint.Create();
         int neighborCount = 0;
 
-        foreach (FActor unit in actors)
+        for (int i = 0; i < actors.Count; i++)
         {
-            if (FindDistanceToUnit(unit) < radius || unit == parentSquad.GetComponent<FActor>())
+            if (FindDistanceToUnit(actors[i]) < radius || actors[i] == parentSquad.GetComponent<FActor>())
             {
                 neighborCount++;
-                averagePosition = FPoint.VectorAdd(averagePosition, unit.GetComponent<FActor>().GetFPosition());
+                averagePosition = FPoint.VectorAdd(averagePosition, actors[i].GetComponent<FActor>().GetFPosition());
             }
         }
 
@@ -168,13 +166,13 @@ public class Unit : FActor, LockStep
         FPoint vector = FPoint.Create();
         int neighborCount = 0;
 
-        foreach (FActor unit in actors)
+        for (int i = 0; i < actors.Count; i++)
         {
-            if (FindDistanceToUnit(unit) < radius)
+            if (FindDistanceToUnit(actors[i]) < radius)
             {
                 neighborCount++;
-                vector.X += (unit.GetFPosition().X - Fpos.X);
-                vector.Y += (unit.GetFPosition().Y - Fpos.Y);
+                vector.X += (actors[i].GetFPosition().X - Fpos.X);
+                vector.Y += (actors[i].GetFPosition().Y - Fpos.Y);
             }
         }
 
@@ -190,17 +188,10 @@ public class Unit : FActor, LockStep
 
     FInt FindDistanceToUnit(FActor unit)
     {
-        //pythagorean theorem c^2 = a^2 + b^2
-        //thus c = square root(a^2 + b^2)
         FInt distX = unit.GetComponent<FActor>().GetFPosition().X - Fpos.X;
         FInt distY = unit.GetComponent<FActor>().GetFPosition().Y - Fpos.Y;
 
         return FPoint.Sqrt(distX * distX + distY * distY);
-    }
-
-    void HandleMovement()
-    {
-
     }
 
     void MoveTowardsSquadLeader()

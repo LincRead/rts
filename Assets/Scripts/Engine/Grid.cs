@@ -51,7 +51,7 @@ public class Grid : MonoBehaviour
             {
                 // Calculate offset for each node
                 Vector3 worldPoint = gridWorldBottomLeftPos + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.up * (y * nodeDiameter + nodeRadius);
-                nodes[x, y] = new Node(true, worldPoint, x, y);
+                nodes[x, y] = new Node(true, worldPoint, x, y, this);
             }
         }
     }

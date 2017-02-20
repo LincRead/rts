@@ -36,11 +36,12 @@ public class Squad : FActor, LockStep {
 
         pathFinding = GetComponent<Pathfinding>();
 
-        for (var i = 0; i < 25; i++)
+        for (var i = 0; i < 5; i++)
         {
-
-            GameObject newUnit = Instantiate(unitPrefab, GetRealPosToVector3() + new Vector3(i * 0.5f, 0.0f, 0.0f), Quaternion.identity) as GameObject;
+            Vector2 pos = new Vector2((i % 5f) * 0.5f, (i % 2f) * 0.5f);
+            GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
+            newUnit.transform.SetParent(transform);
             AddUnit(newUnit.GetComponent<Unit>());
         }
     }
