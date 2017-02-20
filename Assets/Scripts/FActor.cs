@@ -35,6 +35,6 @@ public class FActor : MonoBehaviour, LockStep
 
     public Vector3 GetRealPosToVector3()
     {
-        return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat());
+        return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), Fpos.Y.ToFloat());
     }
 }

@@ -36,7 +36,7 @@ public class Squad : FActor, LockStep {
 
         pathFinding = GetComponent<Pathfinding>();
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 25; i++)
         {
 
             GameObject newUnit = Instantiate(unitPrefab, GetRealPosToVector3() + new Vector3(i * 0.5f, 0.0f, 0.0f), Quaternion.identity) as GameObject;
