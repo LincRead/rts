@@ -1,12 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-public class Unit : MonoBehaviour, LockStep
+public class Unit : FActor, LockStep
 {
-    protected FPoint positionReal;
-    protected FInt velocityX = FInt.Create(0);
-    protected FInt velocityY = FInt.Create(0);
-
     Animator animator;
 
     protected enum UNIT_STATES
@@ -22,8 +19,10 @@ public class Unit : MonoBehaviour, LockStep
 
     Squad parentSquad;
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
+
         animator = GetComponent<Animator>();
     }
 
@@ -48,13 +47,13 @@ public class Unit : MonoBehaviour, LockStep
             Time.deltaTime * 5);
     }
 
-    public void LockStepUpdate()
+    public override void LockStepUpdate()
     {
         HandleCurrentState();
         HandleMovement();
         // Collision Detection
         HandleAnimations();
-        Move();
+        ExecuteMovement();
     }
 
     void HandleCurrentState()
@@ -90,12 +89,113 @@ public class Unit : MonoBehaviour, LockStep
     // TEMP test functionality.
     void HandleMoving()
     {
-        FInt directionX = parentSquad.positionReal.X - positionReal.X;
-        FInt directionY = parentSquad.positionReal.Y - positionReal.Y;
-        FPoint directionNorm = FPoint.Normalize(FPoint.Create(directionX, directionY));
+        FInt radius = FInt.FromParts(1, 0);
+        FInt seperationStrength = FInt.FromParts(1, 100);
 
-        velocityX = parentSquad.unitMoveSpeed * directionNorm.X;
-        velocityY = parentSquad.unitMoveSpeed * directionNorm.Y;
+        if (parentSquad.state == Squad.SQUAD_STATES.IDLE)
+        {
+            if (FindDistanceToUnit(parentSquad.GetComponent<FActor>()) > 3)
+                MoveTowardsSquadLeader();
+            else
+                Fvelocity = FPoint.Create();
+
+            return;
+        }
+
+
+        List<FActor> actors = new List<FActor>(parentSquad.GetUnits());
+        actors.Add(parentSquad.GetComponent<FActor>());
+        actors.Remove(this);
+
+        FPoint alignment = ComputeAlignment(actors, radius);
+        FPoint cohesion = ComputeCohesion(actors, radius);
+        FPoint seperation = ComputeSeperation(actors, radius);
+
+        Fvelocity.X = cohesion.X * FInt.FromParts(1, 0) + seperation.X * seperationStrength + alignment.X;
+        Fvelocity.Y = cohesion.Y * FInt.FromParts(1, 0) + seperation.Y * seperationStrength + alignment.Y;
+        Fvelocity = FPoint.Normalize(Fvelocity);
+    }
+
+    FPoint ComputeAlignment(List<FActor> actors, FInt radius)
+    {
+        FPoint averageVelocity = FPoint.Create();
+        int neighborCount = 0;
+
+        foreach (FActor unit in actors)
+        {
+            if (FindDistanceToUnit(unit) < radius || unit == parentSquad.GetComponent<FActor>())
+            {
+                neighborCount++;
+                averageVelocity = FPoint.VectorAdd(averageVelocity, unit.GetComponent<FActor>().GetFVelocity());
+            }
+        }
+
+        if (neighborCount == 0)
+            return averageVelocity;
+
+        averageVelocity = FPoint.VectorDivide(averageVelocity, neighborCount);
+
+        return FPoint.Normalize(FPoint.Create(averageVelocity.X, averageVelocity.Y));
+    }
+
+    FPoint ComputeCohesion(List<FActor> actors, FInt radius)
+    {
+        FPoint averagePosition = FPoint.Create();
+        int neighborCount = 0;
+
+        foreach (FActor unit in actors)
+        {
+            if (FindDistanceToUnit(unit) < radius || unit == parentSquad.GetComponent<FActor>())
+            {
+                neighborCount++;
+                averagePosition = FPoint.VectorAdd(averagePosition, unit.GetComponent<FActor>().GetFPosition());
+            }
+        }
+
+        if (neighborCount == 0)
+            return averagePosition;
+
+        averagePosition = FPoint.VectorDivide(averagePosition, neighborCount);
+
+        FInt directionX = averagePosition.X - Fpos.X;
+        FInt directionY = averagePosition.Y - Fpos.Y;
+
+        return FPoint.Normalize(FPoint.Create(directionX, directionY));
+    }
+
+    FPoint ComputeSeperation(List<FActor> actors, FInt radius)
+    {
+        FPoint vector = FPoint.Create();
+        int neighborCount = 0;
+
+        foreach (FActor unit in actors)
+        {
+            if (FindDistanceToUnit(unit) < radius)
+            {
+                neighborCount++;
+                vector.X += (unit.GetFPosition().X - Fpos.X);
+                vector.Y += (unit.GetFPosition().Y - Fpos.Y);
+            }
+        }
+
+        if (neighborCount == 0)
+            return vector;
+
+        vector = FPoint.VectorDivide(vector, neighborCount);
+        vector.X *= -1;
+        vector.Y *= -1;
+
+        return FPoint.Normalize(FPoint.Create(vector.X, vector.Y));
+    }
+
+    FInt FindDistanceToUnit(FActor unit)
+    {
+        //pythagorean theorem c^2 = a^2 + b^2
+        //thus c = square root(a^2 + b^2)
+        FInt distX = unit.GetComponent<FActor>().GetFPosition().X - Fpos.X;
+        FInt distY = unit.GetComponent<FActor>().GetFPosition().Y - Fpos.Y;
+
+        return FPoint.Sqrt(distX * distX + distY * distY);
     }
 
     void HandleMovement()
@@ -103,25 +203,33 @@ public class Unit : MonoBehaviour, LockStep
 
     }
 
-    void Move()
+    void MoveTowardsSquadLeader()
     {
-        positionReal.X += velocityX;
-        positionReal.Y += velocityY;
+        FPoint FsquadPos = parentSquad.GetComponent<FActor>().GetFPosition();
+        FInt directionX = FsquadPos.X - Fpos.X;
+        FInt directionY = FsquadPos.Y - Fpos.Y;
+        Fvelocity = FPoint.Normalize(FPoint.Create(directionX, directionY));
+    }
+
+    void ExecuteMovement()
+    {
+        Fpos.X += Fvelocity.X * parentSquad.unitMoveSpeed;
+        Fpos.Y += Fvelocity.Y * parentSquad.unitMoveSpeed;
     }
 
     void HandleAnimations()
     {
-        if(velocityX > 0)
+        if (Fvelocity.X > 0)
         {
             transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
         }
 
-        else if(velocityX < 0)
+        else if(Fvelocity.X < 0)
         {
             transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
         }
 
-        if(velocityX == 0 && velocityY == 0)
+        if(Fvelocity.X == 0 && Fvelocity.Y == 0)
         {
             animator.SetBool("moving", false);
         }
@@ -149,19 +257,9 @@ public class Unit : MonoBehaviour, LockStep
 
     void Kill()
     {
-        parentSquad.RemoveUnit(gameObject);
+        parentSquad.RemoveUnit(this);
         currentState = UNIT_STATES.DYING;
         // Trigger Kill animation
         Invoke("Destroy", 1f); // TODO: get death anim duration
-    }
-
-    void Destroy()
-    {
-        Destroy(gameObject);
-    }
-
-    public Vector3 GetRealPosToVector3()
-    {
-        return new Vector3(positionReal.X.ToFloat(), positionReal.Y.ToFloat());
     }
 }

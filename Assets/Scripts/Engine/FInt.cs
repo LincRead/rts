@@ -72,6 +72,12 @@ public struct FInt
     }
     #endregion
 
+    public static FInt FromFloat(float f)
+    {
+        decimal d = System.Math.Round((decimal)f, 2);
+        return FInt.FromParts((int)d, (int)((d - (int)d) * 1000));
+    }
+
     #region *
     public static FInt operator *(FInt one, FInt other)
     {
@@ -322,6 +328,14 @@ public struct FPoint
 {
     public FInt X;
     public FInt Y;
+
+    public static FPoint Create()
+    {
+        FPoint fp;
+        fp.X = FInt.Create(0);
+        fp.Y = FInt.Create(0);
+        return fp;
+    }
 
     public static FPoint Create(FInt X, FInt Y)
     {
