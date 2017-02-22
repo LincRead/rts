@@ -109,7 +109,7 @@ public class Unit : FActor, LockStep
 
         FInt radius = FInt.FromParts(0, 800);
         FInt cohesionStrength = FInt.FromParts(1, 0);
-        FInt seperationStrength = FInt.FromParts(1, 100);
+        FInt seperationStrength = FInt.FromParts(1, 0);
         FInt alignmentStrength = FInt.FromParts(0, 600);
 
         List<FActor> actors = new List<FActor>(parentSquad.GetUnits());
@@ -121,8 +121,15 @@ public class Unit : FActor, LockStep
         FPoint seperation = ComputeSeperation(actors, radius);
 
         Fvelocity.X = cohesion.X * cohesionStrength + seperation.X * seperationStrength + alignment.X * alignmentStrength;
-        Fvelocity.Y = cohesion.Y * cohesionStrength + seperation.Y * seperationStrength + alignment.Y * alignmentStrength; ;
-        Fvelocity = FPoint.Normalize(Fvelocity);
+        Fvelocity.Y = cohesion.Y * cohesionStrength + seperation.Y * seperationStrength + alignment.Y * alignmentStrength;
+
+        FInt maxVelocity = FInt.Create(1);
+        if (Fvelocity.X > maxVelocity) Fvelocity.X = maxVelocity;
+        if (Fvelocity.X < maxVelocity * -1) Fvelocity.X = maxVelocity * -1;
+        if (Fvelocity.Y > maxVelocity) Fvelocity.Y = maxVelocity;
+        if (Fvelocity.Y < maxVelocity * -1) Fvelocity.Y = maxVelocity * -1;
+
+        //Fvelocity = FPoint.Normalize(Fvelocity);
     }
 
     FPoint ComputeAlignment(List<FActor> actors, FInt radius)
@@ -179,9 +186,10 @@ public class Unit : FActor, LockStep
 
         for (int i = 0; i < actors.Count; i++)
         {
-            if (FindDistanceToUnit(actors[i]) < radius)
+            if (FindDistanceToUnit(actors[i]) < FInt.FromParts(0, 600))
             {
                 neighborCount++;
+
                 vector.X += (actors[i].GetFPosition().X - Fpos.X);
                 vector.Y += (actors[i].GetFPosition().Y - Fpos.Y);
             }
@@ -221,17 +229,17 @@ public class Unit : FActor, LockStep
 
     void HandleAnimations()
     {
-        if (Fvelocity.X > 0)
+        if (parentSquad.GetFVelocity().X > 0)
         {
-            transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
+            transform.localScale = new Vector3(-.6f, .6f, 1f);
         }
 
-        else if(Fvelocity.X < 0)
+        else if(parentSquad.GetFVelocity().X < 0)
         {
-            transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            transform.localScale = new Vector3(.6f, .6f, 1f);
         }
 
-        if(Fvelocity.X == 0 && Fvelocity.Y == 0)
+        if(parentSquad.GetFVelocity().X == 0 && parentSquad.GetFVelocity().Y == 0)
         {
             animator.SetBool("moving", false);
         }

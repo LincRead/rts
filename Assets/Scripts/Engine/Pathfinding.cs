@@ -23,7 +23,7 @@ public class Pathfinding : MonoBehaviour {
             grid = gridObj.GetComponent<Grid>();
     }
 
-    public void DetectCurrentPathfindingNode(Vector3 pos)
+    public Node DetectCurrentPathfindingNode(Vector3 pos)
     {
         Node node = grid.GetNodeFromWorldPoint(pos);
 
@@ -31,7 +31,7 @@ public class Pathfinding : MonoBehaviour {
         if (node == null)
         {
             Debug.LogError(name + " is standing outside grid");
-            return;
+            return null;
         }
 
         // Standing on another node than currently stored
@@ -46,7 +46,10 @@ public class Pathfinding : MonoBehaviour {
             // Store the node this controller is currently standing on
             currentStandingOnNode = node;
             node.squadStandingHere = true;
+            return node;
         }
+
+        return null;
     }
 
     public List<Node> FindPath(Vector2 endPos)
