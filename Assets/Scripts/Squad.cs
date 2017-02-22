@@ -26,6 +26,11 @@ public class Squad : Boid, LockStep {
     public FInt unitMoveSpeed = FInt.FromParts(0, 300);
     List<FActor> units = new List<FActor>();
 
+    [Header("Squad behaviour")]
+    public FInt cohesionStrength = FInt.FromParts(1, 0);
+    public FInt seperationStrength = FInt.FromParts(1, 0);
+    public FInt alignmentStrength = FInt.FromParts(1, 0);
+
     protected override void Start()
     {
         base.Start();

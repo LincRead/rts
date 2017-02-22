@@ -18,14 +18,12 @@ public class Unit : Boid, LockStep
     Animator animator;
     Squad parentSquad;
     GameObject[] obstacles;
-    FPoint spawnPosOffsetSqaud;
 
     protected override void Start()
     {
         base.Start();
         obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         animator = GetComponent<Animator>();
-        spawnPosOffsetSqaud = FPoint.VectorSubtract(parentSquad.GetFPosition(), GetFPosition());
     }
 
     public void SetSquad(Squad squad)
@@ -48,7 +46,7 @@ public class Unit : Boid, LockStep
             currentLerpTime = lerpTime;
 
         float t = currentLerpTime / lerpTime;
-        //t = Mathf.Sin(t * Mathf.PI * 0.5f);
+        t = Mathf.Sin(t * Mathf.PI * 0.5f);
 
         transform.position = Vector3.Lerp(
             transform.position,
@@ -64,7 +62,6 @@ public class Unit : Boid, LockStep
         HandleCurrentState();
         HandleAnimations();
         ExecuteMovement();
-        //HandleCollision();
     }
 
     void HandleCurrentState()
@@ -97,38 +94,6 @@ public class Unit : Boid, LockStep
 
     }
 
-    void HandleCollision()
-    {
-        FRectangle r1 = GetCollisionRectangle();
-        for(int i = 0; i < obstacles.Length; i++)
-        {
-            FRectangle r2 = obstacles[i].GetComponent<FActor>().GetCollisionRectangle();
-
-            if (r1.X < r2.X + r2.W &&
-               r1.X + r1.W > r2.X &&
-               r1.Y < r2.Y + r2.H &&
-               r1.Y + r1.H > r2.Y)
-            {
-                if (Fvelocity.X < 0)
-                    Fpos.X += parentSquad.unitMoveSpeed;
-                if (Fvelocity.X > 0)
-                    Fpos.X -= parentSquad.unitMoveSpeed;
-            }
-
-            r1 = GetCollisionRectangle();
-            if (r1.X < r2.X + r2.W &&
-               r1.X + r1.W > r2.X &&
-               r1.Y < r2.Y + r2.H &&
-               r1.Y + r1.H > r2.Y)
-            {
-                if (Fvelocity.Y < 0)
-                    Fpos.Y += parentSquad.unitMoveSpeed;
-                if (Fvelocity.Y > 0)
-                    Fpos.Y -= parentSquad.unitMoveSpeed;
-            }
-        }
-    }
-
     void HandleMoving()
     {
         if(parentSquad.state == Squad.SQUAD_STATES.IDLE)
@@ -138,16 +103,12 @@ public class Unit : Boid, LockStep
             if (path != null)
                 path.Clear();
 
-            // Todo: move to position before done?
-
             return;
         }
 
-        FInt radius = FInt.FromParts(0, 800);
-
-        FInt cohesionStrength = FInt.FromParts(1, 0);
-        FInt seperationStrength = FInt.FromParts(10, 0);
-        FInt alignmentStrength = FInt.FromParts(1, 0);
+        FInt cohesionStrength = parentSquad.cohesionStrength;
+        FInt seperationStrength = parentSquad.seperationStrength;
+        FInt alignmentStrength = parentSquad.alignmentStrength;
 
         if (path != null)
             path.Clear();
@@ -168,22 +129,15 @@ public class Unit : Boid, LockStep
         }
 
         actors.Remove(parentSquad.GetComponent<FActor>());
-        FPoint cohesion = ComputeCohesion(actors);
-        FPoint alignment = ComputeSeekLeader(parentSquad);
+        FPoint alignment = ComputeAlignment(actors);
+        FPoint cohesion = ComputeSeekLeader(parentSquad);
         FPoint seperation = ComputeSeperation(actors);
 
-        Fvelocity.X = seperation.X * seperationStrength + alignment.X * alignmentStrength;
-        Fvelocity.Y = seperation.Y * seperationStrength + alignment.Y * alignmentStrength;
+        Fvelocity.X = cohesion.X + cohesionStrength * seperation.X * seperationStrength + alignment.X * alignmentStrength;
+        Fvelocity.Y = cohesion.Y + cohesionStrength *  seperation.Y * seperationStrength + alignment.Y * alignmentStrength;
         Fvelocity = FPoint.Normalize(Fvelocity);
-
-        velocity = new Vector2(Fvelocity.X.ToFloat(), Fvelocity.Y.ToFloat());
-        valignment = new Vector2(alignment.X.ToFloat(), alignment.Y.ToFloat());
-        vseperation = new Vector2(seperation.X.ToFloat(), seperation.Y.ToFloat());
     }
 
-    public Vector2 velocity;
-    public Vector2 valignment;
-    public Vector2 vseperation;
 
     FPoint ComputeSeekLeader(FActor leader)
     {
@@ -209,8 +163,6 @@ public class Unit : Boid, LockStep
 
         averageVelocity = FPoint.VectorDivide(averageVelocity, neighborCount);
 
-        //return averageVelocity;
-
         return FPoint.Normalize(FPoint.Create(averageVelocity.X, averageVelocity.Y));
     }
 
@@ -233,8 +185,6 @@ public class Unit : Boid, LockStep
         FInt directionX = averagePosition.X - Fpos.X;
         FInt directionY = averagePosition.Y - Fpos.Y;
 
-        // return FPoint.Create(directionX, directionY);
-
         return FPoint.Normalize(FPoint.Create(directionX, directionY));
     }
 
@@ -247,15 +197,21 @@ public class Unit : Boid, LockStep
         for (int i = 0; i < actors.Count; i++)
         {
             FInt dist = FindDistanceToUnit(actors[i]);
-            if (dist < FInt.FromParts(0, 500) && dist != 0)
+            if (dist < FInt.FromParts(1, 700) && dist != 0)
             {
                 FInt vx = (actors[i].GetFPosition().X - Fpos.X);
                 FInt vy = (actors[i].GetFPosition().Y - Fpos.Y);
 
+                if(vx != 0)
+                    vx = FInt.FromParts(0, 599) / vx;
+
+                if (vy != 0)
+                    vy = FInt.FromParts(0, 599) / vy;
+
                 neighborCount++;
 
-                vector.X += (actors[i].GetFPosition().X - Fpos.X);
-                vector.Y += (actors[i].GetFPosition().Y - Fpos.Y);
+                vector.X += vx;
+                vector.Y += vy;
             }
         }
 
@@ -266,9 +222,7 @@ public class Unit : Boid, LockStep
         vector.X *= -1;
         vector.Y *= -1;
 
-        //return vector;
-
-        return FPoint.Create(vector.X, vector.Y);
+        return vector;
     }
 
     FInt FindDistanceToUnit(FActor unit)
@@ -295,17 +249,17 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
-        if (GetFVelocity().X > 0)
+        if (parentSquad.GetFVelocity().X > 0)
         {
             transform.localScale = new Vector3(-.6f, .6f, 1f);
         }
 
-        else if(GetFVelocity().X < 0)
+        else if(parentSquad.GetFVelocity().X < 0)
         {
             transform.localScale = new Vector3(.6f, .6f, 1.0f);
         }
 
-        if(GetFVelocity().X == 0 && GetFVelocity().Y == 0)
+        if(parentSquad.GetFVelocity().X == 0 && parentSquad.GetFVelocity().Y == 0)
         {
             animator.SetBool("moving", false);
         }
@@ -313,6 +267,38 @@ public class Unit : Boid, LockStep
         else
         {
             animator.SetBool("moving", true);
+        }
+    }
+
+    void HandleCollision()
+    {
+        FRectangle r1 = GetCollisionRectangle();
+        for (int i = 0; i < obstacles.Length; i++)
+        {
+            FRectangle r2 = obstacles[i].GetComponent<FActor>().GetCollisionRectangle();
+
+            if (r1.X < r2.X + r2.W &&
+               r1.X + r1.W > r2.X &&
+               r1.Y < r2.Y + r2.H &&
+               r1.Y + r1.H > r2.Y)
+            {
+                if (Fvelocity.X < 0)
+                    Fpos.X += parentSquad.unitMoveSpeed;
+                if (Fvelocity.X > 0)
+                    Fpos.X -= parentSquad.unitMoveSpeed;
+            }
+
+            r1 = GetCollisionRectangle();
+            if (r1.X < r2.X + r2.W &&
+               r1.X + r1.W > r2.X &&
+               r1.Y < r2.Y + r2.H &&
+               r1.Y + r1.H > r2.Y)
+            {
+                if (Fvelocity.Y < 0)
+                    Fpos.Y += parentSquad.unitMoveSpeed;
+                if (Fvelocity.Y > 0)
+                    Fpos.Y -= parentSquad.unitMoveSpeed;
+            }
         }
     }
 
