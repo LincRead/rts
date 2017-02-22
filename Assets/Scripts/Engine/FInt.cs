@@ -374,6 +374,14 @@ public struct FPoint
         result.Y = F1.Y / Divisor;
         return result;
     }
+
+    public static FPoint VectorMultiply(FPoint F1, FInt Multiplier)
+    {
+        FPoint result;
+        result.X = F1.X * Multiplier;
+        result.Y = F1.Y * Multiplier;
+        return result;
+    }
     #endregion
 
     #region PI, DoublePI
@@ -536,5 +544,33 @@ public struct FPoint
             return FPoint.Create(A.X / distance, A.Y / distance);
         else
             return FPoint.Create(FInt.Create(0), FInt.Create(0));
+    }
+}
+
+public struct FRectangle
+{
+    public FInt X;
+    public FInt Y;
+    public FInt W;
+    public FInt H;
+
+    public static FRectangle Create()
+    {
+        FRectangle fp;
+        fp.X = FInt.Create(0);
+        fp.Y = FInt.Create(0);
+        fp.W = FInt.Create(0);
+        fp.H = FInt.Create(0);
+        return fp;
+    }
+
+    public static FRectangle Create(FInt X, FInt Y, FInt W, FInt H)
+    {
+        FRectangle fp;
+        fp.X = X;
+        fp.Y = Y;
+        fp.W = W;
+        fp.H = H;
+        return fp;
     }
 }

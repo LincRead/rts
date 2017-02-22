@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Node : IHeapItem<Node>
 {
@@ -21,6 +22,9 @@ public class Node : IHeapItem<Node>
 
     public GameObject tilePrefab;
     private Grid grid;
+
+    [HideInInspector]
+    public List<FActor> actorsStandingHere = new List<FActor>();
 
     public Node(bool _walkable, Vector2 _worldPosition, int _gridPosX, int _gridPosY, Grid grid)
     {

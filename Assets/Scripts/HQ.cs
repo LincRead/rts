@@ -20,7 +20,7 @@ public class HQ : MonoBehaviour {
         timeSinceSpawn += Time.deltaTime;
         if(timeSinceSpawn >= timeBetweenSpawn)
         {
-            GameObject spawnedUnit = GameObject.Instantiate(unitPrefab, transform.position, Quaternion.identity) as GameObject;
+            GameObject spawnedUnit = GameObject.Instantiate(unitPrefab, transform.position + new Vector3(0.0f, -1f, 0.0f), Quaternion.identity) as GameObject;
             GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
             for(int i = 0; i < squads.Length; i++)
             {

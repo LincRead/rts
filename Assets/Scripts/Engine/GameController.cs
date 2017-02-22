@@ -4,7 +4,7 @@ using System.Collections;
 public class GameController : MonoBehaviour {
 
     int currentTick = 0;
-    float timeBetweenTicks = .2f;
+    float timeBetweenTicks = .1f;
     float timeSinceLastTick = 0.0f;
 
 	// Use this for initialization
@@ -23,6 +23,7 @@ public class GameController : MonoBehaviour {
         if (timeSinceLastTick >= timeBetweenTicks)
         {
             timeSinceLastTick = 0.0f;
+            currentTick++;
             LockStepUpdate();
         }
     }
@@ -30,7 +31,7 @@ public class GameController : MonoBehaviour {
     void LockStepUpdate()
     {
         GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
-        foreach (GameObject squad in squads)
-            squad.GetComponent<Squad>().LockStepUpdate();
+        for(int i = 0; i < squads.Length; i++)
+            squads[i].GetComponent<Squad>().LockStepUpdate();
     }
 }

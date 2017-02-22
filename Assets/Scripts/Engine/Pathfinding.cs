@@ -12,7 +12,7 @@ public class Pathfinding : MonoBehaviour {
     public Node currentStandingOnNode;
     protected Node startNode;
     protected Node destinationNode;
-    protected 
+    protected FActor parentReference; 
 
     // Use this for initialization
     void Start()
@@ -21,6 +21,8 @@ public class Pathfinding : MonoBehaviour {
 
         if (gridObj)
             grid = gridObj.GetComponent<Grid>();
+
+        parentReference = transform.GetComponent<FActor>();
     }
 
     public Node DetectCurrentPathfindingNode(Vector3 pos)
@@ -40,16 +42,17 @@ public class Pathfinding : MonoBehaviour {
             // Clear the previous node this controller was standing on
             if (currentStandingOnNode != null)
             {
+                currentStandingOnNode.actorsStandingHere.Remove(parentReference);
                 currentStandingOnNode.squadStandingHere = false;
             }
 
             // Store the node this controller is currently standing on
             currentStandingOnNode = node;
             node.squadStandingHere = true;
-            return node;
+            node.actorsStandingHere.Add(parentReference);
         }
 
-        return null;
+        return node;
     }
 
     public List<Node> FindPath(Vector2 endPos)
