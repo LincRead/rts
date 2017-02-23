@@ -1,2 +1,2 @@
 # rts
-Real Time Strategy
+Squad-based RTS for mobile platforms.
