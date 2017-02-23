@@ -375,6 +375,22 @@ public struct FPoint
         return result;
     }
 
+    public static FPoint VectorDivide(FPoint F1, FInt Divisor)
+    {
+        FPoint result;
+        result.X = F1.X / Divisor;
+        result.Y = F1.Y / Divisor;
+        return result;
+    }
+
+    public static FPoint VectorDivide(FPoint F1, FPoint F2)
+    {
+        FPoint result;
+        result.X = F1.X / F2.X;
+        result.Y = F1.Y / F2.Y;
+        return result;
+    }
+
     public static FPoint VectorMultiply(FPoint F1, FInt Multiplier)
     {
         FPoint result;

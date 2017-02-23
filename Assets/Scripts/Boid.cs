@@ -9,6 +9,8 @@ public class Boid : FActor, LockStep
     protected Node currentStandingNode;
     protected int currentWaypointTarget = 0;
 
+    public Vector2 debugVectorValue;
+
     protected override void Start()
     {
         base.Start();
@@ -19,6 +21,8 @@ public class Boid : FActor, LockStep
     public override void LockStepUpdate()
     {
         currentStandingNode = pathFinding.DetectCurrentPathfindingNode(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()));
+
+        debugVectorValue = new Vector2(Fvelocity.X.ToFloat(), Fvelocity.Y.ToFloat());
 
         base.LockStepUpdate();
     }

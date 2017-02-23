@@ -18,12 +18,14 @@ public class Unit : Boid, LockStep
     Animator animator;
     Squad parentSquad;
     GameObject[] obstacles;
+    FPoint squadPosOffset;
 
     protected override void Start()
     {
         base.Start();
         obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         animator = GetComponent<Animator>();
+        squadPosOffset = FPoint.VectorSubtract(parentSquad.GetFPosition(), GetFPosition());
     }
 
     public void SetSquad(Squad squad)
@@ -62,6 +64,7 @@ public class Unit : Boid, LockStep
         HandleCurrentState();
         HandleAnimations();
         ExecuteMovement();
+        HandleCollision();
     }
 
     void HandleCurrentState()
@@ -103,12 +106,8 @@ public class Unit : Boid, LockStep
             if (path != null)
                 path.Clear();
 
-            return;
+            //return;
         }
-
-        FInt cohesionStrength = parentSquad.cohesionStrength;
-        FInt seperationStrength = parentSquad.seperationStrength;
-        FInt alignmentStrength = parentSquad.alignmentStrength;
 
         if (path != null)
             path.Clear();
@@ -117,34 +116,57 @@ public class Unit : Boid, LockStep
 
         Grid grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
         List<Node> neighbours = grid.GetNeighbours(currentStandingNode);
+        neighbours.Add(currentStandingNode);
         for (int n = 0; n < neighbours.Count; n++)
         {
             for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
             {
-                if (neighbours[n].actorsStandingHere[i] != this)
+                if (neighbours[n].actorsStandingHere[i] != this 
+                    && FindDistanceToUnit(neighbours[n].actorsStandingHere[i]) < FInt.FromParts(1, 500))
                 {
                     actors.Add(neighbours[n].actorsStandingHere[i]);
                 }
             }
         }
 
+        // Other units
         actors.Remove(parentSquad.GetComponent<FActor>());
         FPoint alignment = ComputeAlignment(actors);
-        FPoint cohesion = ComputeSeekLeader(parentSquad);
+        FPoint cohesion = ComputerSeekFormationPostion(parentSquad);
         FPoint seperation = ComputeSeperation(actors);
+        FPoint obstacleAvoidance = ComputeObstacleAvoidance(obstacles);
 
-        Fvelocity.X = cohesion.X + cohesionStrength * seperation.X * seperationStrength + alignment.X * alignmentStrength;
-        Fvelocity.Y = cohesion.Y + cohesionStrength *  seperation.Y * seperationStrength + alignment.Y * alignmentStrength;
-        Fvelocity = FPoint.Normalize(Fvelocity);
+        // Add all steerigng forces
+        AddSteeringForce(seperation, FInt.FromParts(1, 0));
+        //Fvelocity = FPoint.Normalize(Fvelocity);
     }
 
+    void AddSteeringForce(FPoint steeringForce, FInt weight)
+    {
+        Fvelocity.X += steeringForce.X * weight;
+        Fvelocity.Y += steeringForce.Y * weight;
+    }
 
     FPoint ComputeSeekLeader(FActor leader)
     {
-        FInt directionX = leader.GetFPosition().X - Fpos.X;
-        FInt directionY = leader.GetFPosition().Y - Fpos.Y;
+        FInt directionX = leader.GetFPosition().X - GetFPosition().X;
+        FInt directionY = leader.GetFPosition().Y - GetFPosition().Y;
 
         return FPoint.Normalize(FPoint.Create(directionX, directionY));
+    }
+
+    FPoint ComputerSeekFormationPostion(FActor leader)
+    {
+        FInt distX = leader.GetFPosition().X - (GetFPosition().X + squadPosOffset.X);
+        FInt distY = leader.GetFPosition().Y - (GetFPosition().Y + squadPosOffset.Y);
+
+        FPoint vector;
+        if (FPoint.Sqrt((distX * distX) + (distY * distY)) > FInt.Create(1))
+            vector = FPoint.Normalize(FPoint.Create(distX, distY));
+        else
+            vector = FPoint.Normalize(FPoint.Create(distX, distY));
+
+        return vector;
     }
 
     FPoint ComputeAlignment(List<FActor> actors)
@@ -191,22 +213,56 @@ public class Unit : Boid, LockStep
 
     FPoint ComputeSeperation(List<FActor> actors)
     {
-        FPoint vector = FPoint.Create();
+        FPoint steer = FPoint.Create();
+        FInt desiredseparation = FInt.FromParts(0, 400);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
         {
             FInt dist = FindDistanceToUnit(actors[i]);
+            if (dist > 0 && dist < desiredseparation)
+            {
+                FPoint diff = FPoint.VectorSubtract(Fpos, actors[i].GetFPosition());
+                diff = FPoint.Normalize(diff);
+                diff = FPoint.VectorDivide(diff, dist);
+                steer = FPoint.VectorAdd(steer, diff);
+                neighborCount++;
+            }
+        }
+
+        if (neighborCount > 0)
+        {
+            steer = FPoint.VectorDivide(steer, neighborCount);
+        }
+
+        if (steer.X != 0 || steer.Y != 0)
+        {
+            steer = FPoint.Normalize(steer);
+            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorSubtract(steer, Fvelocity);
+        }
+
+        return steer;
+    }
+
+    FPoint ComputeObstacleAvoidance(GameObject[] obstacles)
+    {
+        FPoint vector = FPoint.Create();
+        int neighborCount = 0;
+
+        for (int i = 0; i < obstacles.Length; i++)
+        {
+            FInt dist = FindDistanceToUnit(obstacles[i].GetComponent<FActor>());
             if (dist < FInt.FromParts(1, 700) && dist != 0)
             {
-                FInt vx = (actors[i].GetFPosition().X - Fpos.X);
-                FInt vy = (actors[i].GetFPosition().Y - Fpos.Y);
+                FInt vx = (obstacles[i].GetComponent<FActor>().GetFPosition().X - Fpos.X);
+                FInt vy = (obstacles[i].GetComponent<FActor>().GetFPosition().Y - Fpos.Y);
 
-                if(vx != 0)
-                    vx = FInt.FromParts(0, 599) / vx;
+                if (vx != 0)
+                    vx = FInt.FromParts(0, 600) / vx;
 
                 if (vy != 0)
-                    vy = FInt.FromParts(0, 599) / vy;
+                    vy = FInt.FromParts(0, 600) / vy;
 
                 neighborCount++;
 

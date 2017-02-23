@@ -26,20 +26,15 @@ public class Squad : Boid, LockStep {
     public FInt unitMoveSpeed = FInt.FromParts(0, 300);
     List<FActor> units = new List<FActor>();
 
-    [Header("Squad behaviour")]
-    public FInt cohesionStrength = FInt.FromParts(1, 0);
-    public FInt seperationStrength = FInt.FromParts(1, 0);
-    public FInt alignmentStrength = FInt.FromParts(1, 0);
-
     protected override void Start()
     {
         base.Start();
 
         pathFinding = GetComponent<Pathfinding>();
 
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 20; i++)
         {
-            Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.5f, transform.position.y + (i % 2f) * 0.5f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.2f, transform.position.y + (i % 2f) * 0.2f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             //newUnit.transform.SetParent(transform);
