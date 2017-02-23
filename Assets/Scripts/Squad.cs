@@ -29,7 +29,7 @@ public class Squad : Boid, LockStep {
     [Header("Units")]
     public int unitMaxHitpoints = 2;
     public int unitAttackDamage = 1;
-    public FInt unitMoveSpeed = FInt.FromParts(0, 400);
+    public FInt unitMoveSpeed = FInt.FromParts(0, 600);
     List<FActor> units = new List<FActor>();
 
     protected override void Start()

@@ -69,7 +69,7 @@ public class Unit : Boid, LockStep
         HandleCurrentState();
         HandleAnimations();
         ExecuteMovement();
-        HandleCollision();
+        //HandleCollision();
     }
 
     void HandleCurrentState()
@@ -115,8 +115,7 @@ public class Unit : Boid, LockStep
         {
             for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
             {
-                if (neighbours[n].actorsStandingHere[i] != parentSquad 
-                    && FindDistanceToUnit(neighbours[n].actorsStandingHere[i]) < FInt.FromParts(1, 500))
+                if (neighbours[n].actorsStandingHere[i] != parentSquad)
                 {
                     actors.Add(neighbours[n].actorsStandingHere[i]);
                 }
@@ -182,11 +181,9 @@ public class Unit : Boid, LockStep
             return averagePosition;
 
         averagePosition = FPoint.VectorDivide(averagePosition, neighborCount);
+        averagePosition = FPoint.VectorSubtract(averagePosition, Fpos);
 
-        FInt directionX = averagePosition.X - Fpos.X;
-        FInt directionY = averagePosition.Y - Fpos.Y;
-
-        return FPoint.Normalize(FPoint.Create(directionX, directionY));
+        return FPoint.Normalize(averagePosition);
     }
 
     FPoint ComputeSeek(FActor leader)
@@ -275,7 +272,6 @@ public class Unit : Boid, LockStep
         return vector;
     }
 
-
     FPoint ComputeObstacleAvoidance(GameObject[] obstacles)
     {
         FPoint vector = FPoint.Create();
@@ -344,7 +340,7 @@ public class Unit : Boid, LockStep
             transform.localScale = new Vector3(.6f, .6f, 1.0f);
         }
 
-        if(currentState == UNIT_STATES.IDLE)
+        if(Fvelocity.X == 0 && Fvelocity.Y == 0)
         {
             animator.SetBool("moving", false);
         }
