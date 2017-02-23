@@ -4,16 +4,21 @@ using System.Collections.Generic;
 
 public class Unit : Boid, LockStep
 {
-    protected enum UNIT_STATES
+    public enum UNIT_STATES
     {
-        DEFAULT,
+        IDLE,
+        MOVE,
         ATTACKING,
         DYING
     }
 
     int hitpoints = 2;
 
-    private UNIT_STATES currentState = UNIT_STATES.DEFAULT;
+    [HideInInspector]
+    public UNIT_STATES currentState = UNIT_STATES.MOVE;
+
+    [HideInInspector]
+    public bool isLeader = false;
 
     Animator animator;
     Squad parentSquad;
@@ -71,7 +76,8 @@ public class Unit : Boid, LockStep
     {
         switch (currentState)
         {
-            case UNIT_STATES.DEFAULT: HandleMoving(); break;
+            case UNIT_STATES.IDLE: HandleMoving(); break;
+            case UNIT_STATES.MOVE: HandleMoving(); break;
             case UNIT_STATES.ATTACKING: HandleAttacking(); break;
             case UNIT_STATES.DYING: HandleDying(); break;
         }
@@ -79,7 +85,7 @@ public class Unit : Boid, LockStep
 
     void HandleIdling()
     {
-
+        Fvelocity = FPoint.Create();
     }
 
     void HandleAttacking()
@@ -99,29 +105,17 @@ public class Unit : Boid, LockStep
 
     void HandleMoving()
     {
-        if(parentSquad.state == Squad.SQUAD_STATES.IDLE)
-        {
-            Fvelocity = FPoint.Create();
-
-            if (path != null)
-                path.Clear();
-
-            //return;
-        }
-
-        if (path != null)
-            path.Clear();
-
+        Fvelocity = FPoint.Create();
         List<FActor> actors = new List<FActor>();
-
         Grid grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
         List<Node> neighbours = grid.GetNeighbours(currentStandingNode);
         neighbours.Add(currentStandingNode);
+
         for (int n = 0; n < neighbours.Count; n++)
         {
             for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
             {
-                if (neighbours[n].actorsStandingHere[i] != this 
+                if (neighbours[n].actorsStandingHere[i] != parentSquad 
                     && FindDistanceToUnit(neighbours[n].actorsStandingHere[i]) < FInt.FromParts(1, 500))
                 {
                     actors.Add(neighbours[n].actorsStandingHere[i]);
@@ -129,44 +123,29 @@ public class Unit : Boid, LockStep
             }
         }
 
-        // Other units
-        actors.Remove(parentSquad.GetComponent<FActor>());
-        FPoint alignment = ComputeAlignment(actors);
-        FPoint cohesion = ComputerSeekFormationPostion(parentSquad);
-        FPoint seperation = ComputeSeperation(actors);
-        FPoint obstacleAvoidance = ComputeObstacleAvoidance(obstacles);
+        if (currentState != UNIT_STATES.IDLE)
+        {
+            if (isLeader)
+            {
+                FPoint seek = ComputeSeek(parentSquad);
+                AddSteeringForce(seek, FInt.FromParts(1, 0));
+            }
 
-        // Add all steerigng forces
-        AddSteeringForce(seperation, FInt.FromParts(1, 0));
-        //Fvelocity = FPoint.Normalize(Fvelocity);
+            else if (parentSquad.leader)
+            {
+                FPoint seek = ComputeSeek(parentSquad.leader);
+                AddSteeringForce(seek, FInt.FromParts(1, 0));
+            }
+
+            FPoint seperation = ComputeSeperation(actors);
+            AddSteeringForce(seperation, FInt.FromParts(0, 500));
+        }
     }
 
     void AddSteeringForce(FPoint steeringForce, FInt weight)
     {
         Fvelocity.X += steeringForce.X * weight;
         Fvelocity.Y += steeringForce.Y * weight;
-    }
-
-    FPoint ComputeSeekLeader(FActor leader)
-    {
-        FInt directionX = leader.GetFPosition().X - GetFPosition().X;
-        FInt directionY = leader.GetFPosition().Y - GetFPosition().Y;
-
-        return FPoint.Normalize(FPoint.Create(directionX, directionY));
-    }
-
-    FPoint ComputerSeekFormationPostion(FActor leader)
-    {
-        FInt distX = leader.GetFPosition().X - (GetFPosition().X + squadPosOffset.X);
-        FInt distY = leader.GetFPosition().Y - (GetFPosition().Y + squadPosOffset.Y);
-
-        FPoint vector;
-        if (FPoint.Sqrt((distX * distX) + (distY * distY)) > FInt.Create(1))
-            vector = FPoint.Normalize(FPoint.Create(distX, distY));
-        else
-            vector = FPoint.Normalize(FPoint.Create(distX, distY));
-
-        return vector;
     }
 
     FPoint ComputeAlignment(List<FActor> actors)
@@ -210,18 +189,55 @@ public class Unit : Boid, LockStep
         return FPoint.Normalize(FPoint.Create(directionX, directionY));
     }
 
+    FPoint ComputeSeek(FActor leader)
+    {
+        FPoint steer = FPoint.Create();
+        FInt desiredSlowArea = FInt.FromParts(1, 0);
+        FInt dist = FindDistanceToUnit(parentSquad);
+        steer = FPoint.VectorSubtract(leader.GetFPosition(), Fpos);
+
+        if (dist < desiredSlowArea)
+        {
+            // Inside the slowing area
+            steer = FPoint.Normalize(steer);
+            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorMultiply(steer, (dist / desiredSlowArea));
+
+            if (leader && dist < desiredSlowArea / 2)
+            {
+                currentState = UNIT_STATES.IDLE;
+            }
+        }
+
+        else
+        {
+            steer = FPoint.Normalize(steer);
+            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+        }
+
+        steer = FPoint.VectorSubtract(steer, Fvelocity);
+
+        return steer;
+    }
 
     FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FPoint.Create();
-        FInt desiredseparation = FInt.FromParts(0, 400);
+        FInt desiredseparation = FInt.FromParts(0, 500);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
         {
             FInt dist = FindDistanceToUnit(actors[i]);
+
             if (dist > 0 && dist < desiredseparation)
             {
+                if(actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                {
+                    currentState = UNIT_STATES.IDLE;
+                    Fvelocity = FPoint.Create();
+                }
+
                 FPoint diff = FPoint.VectorSubtract(Fpos, actors[i].GetFPosition());
                 diff = FPoint.Normalize(diff);
                 diff = FPoint.VectorDivide(diff, dist);
@@ -244,6 +260,21 @@ public class Unit : Boid, LockStep
 
         return steer;
     }
+
+    FPoint ComputerSeekFormationPostion(FActor leader)
+    {
+        FInt distX = leader.GetFPosition().X - (GetFPosition().X + squadPosOffset.X);
+        FInt distY = leader.GetFPosition().Y - (GetFPosition().Y + squadPosOffset.Y);
+
+        FPoint vector;
+        if (FPoint.Sqrt((distX * distX) + (distY * distY)) > FInt.Create(1))
+            vector = FPoint.Normalize(FPoint.Create(distX, distY));
+        else
+            vector = FPoint.Normalize(FPoint.Create(distX, distY));
+
+        return vector;
+    }
+
 
     FPoint ComputeObstacleAvoidance(GameObject[] obstacles)
     {
@@ -283,10 +314,8 @@ public class Unit : Boid, LockStep
 
     FInt FindDistanceToUnit(FActor unit)
     {
-        FInt distX = unit.GetComponent<FActor>().GetFPosition().X - Fpos.X;
-        FInt distY = unit.GetComponent<FActor>().GetFPosition().Y - Fpos.Y;
-
-        return FPoint.Sqrt((distX * distX) + (distY * distY));
+        FPoint dist = FPoint.VectorSubtract(unit.GetFPosition(), Fpos);
+        return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
     }
 
     void MoveTowardsSquadLeader()
@@ -305,17 +334,17 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
-        if (parentSquad.GetFVelocity().X > 0)
+        if (parentSquad.faceDir == -1)
         {
             transform.localScale = new Vector3(-.6f, .6f, 1f);
         }
 
-        else if(parentSquad.GetFVelocity().X < 0)
+        else if (parentSquad.faceDir == 1)
         {
             transform.localScale = new Vector3(.6f, .6f, 1.0f);
         }
 
-        if(parentSquad.GetFVelocity().X == 0 && parentSquad.GetFVelocity().Y == 0)
+        if(currentState == UNIT_STATES.IDLE)
         {
             animator.SetBool("moving", false);
         }

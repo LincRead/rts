@@ -9,6 +9,9 @@ public class Squad : Boid, LockStep {
 
     public int playerIndex = -1;
 
+    [HideInInspector]
+    public int faceDir = 1;
+
     public enum SQUAD_STATES
     {
         IDLE,
@@ -18,21 +21,22 @@ public class Squad : Boid, LockStep {
 
     public SQUAD_STATES state = SQUAD_STATES.IDLE;
 
+    [HideInInspector]
+    public FActor leader;
+
     // Add Circle Collider as look sense
 
     [Header("Units")]
     public int unitMaxHitpoints = 2;
     public int unitAttackDamage = 1;
-    public FInt unitMoveSpeed = FInt.FromParts(0, 300);
+    public FInt unitMoveSpeed = FInt.FromParts(0, 400);
     List<FActor> units = new List<FActor>();
 
     protected override void Start()
     {
         base.Start();
 
-        pathFinding = GetComponent<Pathfinding>();
-
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < 30; i++)
         {
             Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.2f, transform.position.y + (i % 2f) * 0.2f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
@@ -49,13 +53,38 @@ public class Squad : Boid, LockStep {
         {
             if (Input.GetMouseButtonDown(0))
             {
-                List<Node> newPath = pathFinding.FindPath(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                FPoint lastFPos = Fpos;
+                Fpos = pathFinding.DetectCurrentPathfindingNode(Camera.main.ScreenToWorldPoint(Input.mousePosition))._FworldPosition;
 
-                if (newPath != null && newPath.Count > 0)
+                // Find new leader
+                FActor newLeader = FindNewLeader();
+
+                if (newLeader != null)
                 {
-                    path = newPath;
-                    currentWaypointTarget = 0;
+                    // Tell old leader leadership is over
+                    if (leader != null)
+                        leader.GetComponent<Unit>().isLeader = false;
+
+                    newLeader.GetComponent<Unit>().isLeader = true;
+
+                    if (newLeader.GetFPosition().X < Fpos.X)
+                        faceDir = -1;
+                    else if (newLeader.GetFPosition().X > Fpos.X)
+                        faceDir = 1;
+
+                    // Remember new leader
+                    leader = newLeader;
+
                     state = SQUAD_STATES.MOVE_TO_TARGET;
+
+                    for (int i = 0; i < units.Count; i++)
+                        units[i].GetComponent<Unit>().currentState = Unit.UNIT_STATES.MOVE;
+                }
+
+                else
+                {
+                    // Don't change
+                    Fpos = lastFPos;
                 }
             }
         }
@@ -63,55 +92,43 @@ public class Squad : Boid, LockStep {
         transform.position = GetRealPosToVector3();
     }
 
+    FActor FindNewLeader()
+    {
+        FActor newLeader = null;
+        FInt closetDistToTarget = FInt.Create(1000);
+
+        for (int i = 0; i < units.Count; i++)
+        {
+            FInt dist = FindDistanceToUnit(units[i]);
+            if (dist < closetDistToTarget)
+            {
+                closetDistToTarget = dist;
+                newLeader = units[i];
+            }
+        }
+
+        if (closetDistToTarget < FInt.FromFloat(1))
+            return null;
+
+        return newLeader;
+    }
+
+    FInt FindDistanceToUnit(FActor unit)
+    {
+        FPoint dist = FPoint.VectorSubtract(unit.GetFPosition(), Fpos);
+        return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
+    }
+
     public override void LockStepUpdate()
     {
         base.LockStepUpdate();
 
-        switch (state)
-        {
-            case SQUAD_STATES.IDLE: HandleIdle(); break;
-            case SQUAD_STATES.MOVE_TO_TARGET: HandleMovingToTarget(); break;
-            case SQUAD_STATES.CHASE_SQUAD: HandleChaseSquad(); break;
-        }
-
         for(int i = 0; i < units.Count; i++)
             units[i].GetComponent<FActor>().LockStepUpdate();
-
-        Move();
     }
 
     public Vector2 velocity;
 
-    void Move()
-    {
-        Fpos.X += unitMoveSpeed * Fvelocity.X;
-        Fpos.Y += unitMoveSpeed * Fvelocity.Y;
-    }
-
-    void HandleIdle()
-    {
-
-    }
-
-    void HandleMovingToTarget()
-    {
-        if (path != null && path.Count > 0)
-        {
-            FollowPath();
-        }
-    }
-
-    protected override void ReachedTarget()
-    {
-        Fvelocity.X = FInt.Create(0);
-        Fvelocity.Y = FInt.Create(0);
-        state = SQUAD_STATES.IDLE;
-    }
-
-    void HandleChaseSquad()
-    {
-
-    }
 
     public void AddUnit(Unit newUnit)
     {

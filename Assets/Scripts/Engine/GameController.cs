@@ -4,7 +4,7 @@ using System.Collections;
 public class GameController : MonoBehaviour {
 
     int currentTick = 0;
-    float timeBetweenTicks = .1f;
+    float timeBetweenTicks = .05f;
     float timeSinceLastTick = 0.0f;
 
 	// Use this for initialization
