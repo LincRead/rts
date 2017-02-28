@@ -7,8 +7,6 @@ public class Squad : Boid, LockStep {
     [Header("Unit types")]
     public GameObject unitPrefab;
 
-    public int playerIndex = -1;
-
     [HideInInspector]
     public int faceDir = 1;
 
@@ -22,21 +20,21 @@ public class Squad : Boid, LockStep {
     public SQUAD_STATES state = SQUAD_STATES.IDLE;
 
     [HideInInspector]
-    public FActor leader;
+    public Unit leader;
 
     // Add Circle Collider as look sense
 
     [Header("Units")]
     public int unitMaxHitpoints = 2;
     public int unitAttackDamage = 1;
-    public FInt unitMoveSpeed = FInt.FromParts(0, 600);
-    List<FActor> units = new List<FActor>();
+    public FInt unitMoveSpeed = FInt.FromParts(0, 400);
+    List<Unit> units = new List<Unit>(30);
 
     protected override void Start()
     {
         base.Start();
 
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 20; i++)
         {
             Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.2f, transform.position.y + (i % 2f) * 0.2f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
@@ -48,53 +46,51 @@ public class Squad : Boid, LockStep {
 
     void Update ()
     {
+        FPoint lastFPos = Fpos;
+
         // Todo: put all commands in a chunk within a tick to send over network
-        if (playerIndex == 0)
+        if (playerID == 0)
         {
             if (Input.GetMouseButtonDown(0))
             {
-                FPoint lastFPos = Fpos;
-                Fpos = pathFinding.DetectCurrentPathfindingNode(Camera.main.ScreenToWorldPoint(Input.mousePosition))._FworldPosition;
+                Fpos = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition))._FworldPosition;
 
-                // Find new leader
-                FActor newLeader = FindNewLeader();
+                state = SQUAD_STATES.MOVE_TO_TARGET;
 
-                if (newLeader != null)
-                {
-                    // Tell old leader leadership is over
-                    if (leader != null)
-                        leader.GetComponent<Unit>().isLeader = false;
-
-                    newLeader.GetComponent<Unit>().isLeader = true;
-
-                    if (newLeader.GetFPosition().X < Fpos.X)
-                        faceDir = -1;
-                    else if (newLeader.GetFPosition().X > Fpos.X)
-                        faceDir = 1;
-
-                    // Remember new leader
-                    leader = newLeader;
-
-                    state = SQUAD_STATES.MOVE_TO_TARGET;
-
-                    for (int i = 0; i < units.Count; i++)
-                        units[i].GetComponent<Unit>().currentState = Unit.UNIT_STATES.MOVE;
-                }
-
-                else
-                {
-                    // Don't change
-                    Fpos = lastFPos;
-                }
+                for (int i = 0; i < units.Count; i++)
+                    units[i].MoveToTarget();
             }
+        }
+
+        FindNewLeader();
+
+        if (leader != null)
+        {
+            leader.GetComponent<Unit>().isLeader = true;
+
+            if (leader.GetFPosition().X < Fpos.X)
+                faceDir = -1;
+            else if (leader.GetFPosition().X > Fpos.X)
+                faceDir = 1;
+        }
+
+        else
+        {
+            // Don't change
+            Fpos = lastFPos;
         }
 
         transform.position = GetRealPosToVector3();
     }
 
-    FActor FindNewLeader()
+    public void FindNewLeader()
     {
-        FActor newLeader = null;
+        Unit newLeader = null;
+
+        // Tell old leader leadership is over
+        if (leader != null)
+            leader.GetComponent<Unit>().isLeader = false;
+
         FInt closetDistToTarget = FInt.Create(1000);
 
         for (int i = 0; i < units.Count; i++)
@@ -108,9 +104,9 @@ public class Squad : Boid, LockStep {
         }
 
         if (closetDistToTarget < FInt.FromFloat(1))
-            return null;
+            leader = null;
 
-        return newLeader;
+        leader = newLeader;
     }
 
     FInt FindDistanceToUnit(FActor unit)
@@ -121,7 +117,7 @@ public class Squad : Boid, LockStep {
 
     public override void LockStepUpdate()
     {
-        base.LockStepUpdate();
+        //base.LockStepUpdate();
 
         for(int i = 0; i < units.Count; i++)
             units[i].GetComponent<FActor>().LockStepUpdate();
@@ -133,10 +129,12 @@ public class Squad : Boid, LockStep {
     public void AddUnit(Unit newUnit)
     {
         units.Add(newUnit);
-        newUnit.GetComponent<Unit>().SetSquad(this);
+        Unit unitScript = newUnit.GetComponent<Unit>();
+        unitScript.SetSquad(this);
+        unitScript.playerID = playerID;
     }
 
-    public void RemoveUnit(FActor unitToRemove)
+    public void RemoveUnit(Unit unitToRemove)
     {
         units.Remove(unitToRemove);
     }
@@ -146,7 +144,7 @@ public class Squad : Boid, LockStep {
         return units.Count;
     }
 
-    public List<FActor> GetUnits()
+    public List<Unit> GetUnits()
     {
         return units;
     }

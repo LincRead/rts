@@ -3,17 +3,24 @@ using System.Collections;
 
 public class FActor : MonoBehaviour, LockStep
 {
+    [Header("Player ID")]
+    public int playerID = -1;
+
     protected FPoint Fpos;
     protected FPoint Fvelocity = FPoint.Create(FInt.Create(0), FInt.Create(0));
 
+    public float boundingRadius = 1;
+    FInt FboundingRadius;
+
     protected bool colliding = false;
 
-    private SpriteRenderer spriteRenderer;
+    protected SpriteRenderer spriteRenderer;
 
     protected virtual void Start()
     {
         Fpos.X = FInt.FromFloat(transform.localPosition.x);
         Fpos.Y = FInt.FromFloat(transform.localPosition.y);
+        FboundingRadius = FInt.FromFloat(boundingRadius);
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
@@ -22,15 +29,19 @@ public class FActor : MonoBehaviour, LockStep
 
     }
 
+    protected void ResetVelocity()
+    {
+        Fvelocity.X = FInt.Create(0);
+        Fvelocity.Y = FInt.Create(0);
+    }
+
     void Destroy()
     {
         Destroy(gameObject);
     }
 
-    public FPoint GetFPosition()
-    {
-        return Fpos;
-    }
+    public void SetFPosition(FPoint FposNew) { Fpos = FposNew; }
+    public FPoint GetFPosition() { return Fpos; }
 
     public FPoint GetFVelocity()
     {
@@ -56,21 +67,8 @@ public class FActor : MonoBehaviour, LockStep
             FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.y));
     }
 
-    protected void ResetVelocity()
+    public FInt GetFBoundingRadius()
     {
-        Fvelocity.X = FInt.Create(0);
-        Fvelocity.Y = FInt.Create(0);
-    }
-
-    void OnDrawGizmos()
-    {
-        // Show grid size
-        if(colliding)
-            Gizmos.color = new Color(1.0f, 0.0f, 1.0f, 0.5f);
-        else
-            Gizmos.color = new Color(0.0f, 1.0f, 1.0f, 0.5f);
-
-        FRectangle rect = GetCollisionRectangle();
-        Gizmos.DrawWireCube(GetRealPosToVector3(), new Vector3(rect.W.ToFloat(), rect.H.ToFloat(), 0.0f));
+        return FboundingRadius;
     }
 }

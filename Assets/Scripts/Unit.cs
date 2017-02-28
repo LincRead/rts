@@ -8,13 +8,14 @@ public class Unit : Boid, LockStep
     {
         IDLE,
         MOVE,
+        CHASE,
         ATTACKING,
         DYING
     }
 
     int hitpoints = 2;
 
-    [HideInInspector]
+    [Header("Debug state")]
     public UNIT_STATES currentState = UNIT_STATES.MOVE;
 
     [HideInInspector]
@@ -22,15 +23,27 @@ public class Unit : Boid, LockStep
 
     Animator animator;
     Squad parentSquad;
+    FActor targetEnemy;
     GameObject[] obstacles;
-    FPoint squadPosOffset;
+    FPoint FdirToLeader;
+    FPoint FaheadFull;
+    FPoint FaheadHalf;
+    FPoint FidleVelocity = FPoint.Create();
+    FInt maxSeeAhead = FInt.FromParts(1, 0);
+
+    bool canFindNewTarget = true;
+
+    List<FActor> friendlyActorsClose = new List<FActor>(30);
+    List<FActor> enemyActorsClose = new List<FActor>(30);
+    List<Node> neighbours;
+    Grid grid;
 
     protected override void Start()
     {
         base.Start();
+        grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
         obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         animator = GetComponent<Animator>();
-        squadPosOffset = FPoint.VectorSubtract(parentSquad.GetFPosition(), GetFPosition());
     }
 
     public void SetSquad(Squad squad)
@@ -41,11 +54,20 @@ public class Unit : Boid, LockStep
 
     void Update()
     {
+        if(isLeader)
+            spriteRenderer.color = Color.red;
+        else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
+            spriteRenderer.color = Color.blue;
+        else if(playerID == 1)
+            spriteRenderer.color = Color.magenta;
+        else
+            spriteRenderer.color = Color.white;
+
         SmoothMovement();
     }
 
     float currentLerpTime = 0.0f;
-    float lerpTime = 1f;
+    float lerpTime = 1;
     void SmoothMovement()
     {
         currentLerpTime += Time.deltaTime;
@@ -55,6 +77,7 @@ public class Unit : Boid, LockStep
         float t = currentLerpTime / lerpTime;
         t = Mathf.Sin(t * Mathf.PI * 0.5f);
 
+        //transform.position = GetRealPosToVector3();
         transform.position = Vector3.Lerp(
             transform.position,
             GetRealPosToVector3(),
@@ -66,18 +89,115 @@ public class Unit : Boid, LockStep
     {
         base.LockStepUpdate();
         currentLerpTime = 0.0f;
+        FindCloseUnits();
+        FindDirToLeader();
+
+        // Attack?
+        FInt shortestDistance = FInt.Create(1000);
+        targetEnemy = null;
+        for (int i = 0; i < enemyActorsClose.Count; i++)
+        {
+            FInt dist = FindDistanceToUnit(enemyActorsClose[i]);
+            if(dist < shortestDistance)
+            {
+                shortestDistance = dist;
+                targetEnemy = enemyActorsClose[i];
+            }
+        }
+
+        if(targetEnemy != null)
+        {
+            if(canFindNewTarget)
+            {
+                FPoint FAttackPoint = FPoint.VectorAdd(GetFPosition(), Fvelocity);
+                if (LineIntersectsObstacle(FAttackPoint, targetEnemy))
+                {
+                    currentState = UNIT_STATES.ATTACKING;
+                }
+
+                else if (currentState == UNIT_STATES.IDLE)
+                    currentState = UNIT_STATES.CHASE;
+            }
+        }
+
+        // No more targets
+        else if(currentState == UNIT_STATES.ATTACKING)
+        {
+            if (isLeader)
+                parentSquad.SetFPosition(GetFPosition());
+
+            MoveToTarget();
+        }
+
         HandleCurrentState();
+
         HandleAnimations();
         ExecuteMovement();
         //HandleCollision();
+    }
+
+    public void MoveToTarget()
+    {
+        currentState = UNIT_STATES.MOVE; currentState = UNIT_STATES.MOVE;
+        canFindNewTarget = false;
+        Invoke("CanFindNewTarget", 1f); // todo lockstep
+    }
+
+    void CanFindNewTarget()
+    {
+        canFindNewTarget = true;
+    }
+
+    void FindDirToLeader()
+    {
+        if(parentSquad.leader == null)
+        {
+            FdirToLeader = FidleVelocity;
+            return;
+        }
+
+        if(isLeader)
+        {
+            FdirToLeader = FPoint.VectorSubtract(parentSquad.GetFPosition(), Fpos);
+        }
+
+        else
+        {
+            FdirToLeader = FPoint.VectorSubtract(parentSquad.leader.GetFPosition(), Fpos);
+            FdirToLeader = FPoint.Normalize(FdirToLeader);
+        }
+    }
+
+    void FindCloseUnits()
+    {
+        friendlyActorsClose.Clear();
+        enemyActorsClose.Clear();
+
+        neighbours = grid.GetNeighbours(currentStandingNode);
+        neighbours.Add(currentStandingNode);
+
+        for (int n = 0; n < neighbours.Count; n++)
+        {
+            for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
+            {
+                if (neighbours[n].actorsStandingHere[i])
+                {
+                    if (neighbours[n].actorsStandingHere[i].playerID == playerID)
+                        friendlyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
+                    else
+                        enemyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
+                }
+            }
+        }
     }
 
     void HandleCurrentState()
     {
         switch (currentState)
         {
-            case UNIT_STATES.IDLE: HandleMoving(); break;
+            case UNIT_STATES.IDLE: HandleIdling(); break;
             case UNIT_STATES.MOVE: HandleMoving(); break;
+            case UNIT_STATES.CHASE: HandleChasingUnit(); break;
             case UNIT_STATES.ATTACKING: HandleAttacking(); break;
             case UNIT_STATES.DYING: HandleDying(); break;
         }
@@ -85,12 +205,30 @@ public class Unit : Boid, LockStep
 
     void HandleIdling()
     {
-        Fvelocity = FPoint.Create();
+        Fvelocity = FidleVelocity;
+        //FPoint seperation = ComputeSeperation(friendlyActorsClose);
+        //AddSteeringForce(seperation, FInt.FromParts(1, 0));
+    }
+
+    void HandleChasingUnit()
+    {
+        Fvelocity = FidleVelocity;
+
+        // Steer away from friendly units
+        FPoint seperation = ComputeSeperation(friendlyActorsClose);
+        AddSteeringForce(seperation, FInt.FromParts(0, 600));
+
+        // Steer towards enemy target
+        FPoint seek = ComputeSeek(targetEnemy, false);
+        AddSteeringForce(seek, FInt.FromParts(0, 300));
     }
 
     void HandleAttacking()
     {
+        Fvelocity = FidleVelocity;
 
+        // Attack
+        Attack();
     }
 
     void HandleDying()
@@ -98,47 +236,33 @@ public class Unit : Boid, LockStep
 
     }
 
-    void Idle()
-    {
-
-    }
-
     void HandleMoving()
     {
-        Fvelocity = FPoint.Create();
-        List<FActor> actors = new List<FActor>();
-        Grid grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
-        List<Node> neighbours = grid.GetNeighbours(currentStandingNode);
-        neighbours.Add(currentStandingNode);
+        Fvelocity = FidleVelocity;
 
-        for (int n = 0; n < neighbours.Count; n++)
+        if (isLeader)
         {
-            for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
-            {
-                if (neighbours[n].actorsStandingHere[i] != parentSquad)
-                {
-                    actors.Add(neighbours[n].actorsStandingHere[i]);
-                }
-            }
+            FPoint seek = ComputeSeek(parentSquad, true);
+            AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
-        if (currentState != UNIT_STATES.IDLE)
+        else if (parentSquad.leader != null)
         {
-            if (isLeader)
-            {
-                FPoint seek = ComputeSeek(parentSquad);
-                AddSteeringForce(seek, FInt.FromParts(1, 0));
-            }
-
-            else if (parentSquad.leader)
-            {
-                FPoint seek = ComputeSeek(parentSquad.leader);
-                AddSteeringForce(seek, FInt.FromParts(1, 0));
-            }
-
-            FPoint seperation = ComputeSeperation(actors);
-            AddSteeringForce(seperation, FInt.FromParts(0, 500));
+            FPoint seek = ComputeSeek(parentSquad.leader, true);
+            AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
+
+        FPoint seperation = ComputeSeperation(friendlyActorsClose);
+        AddSteeringForce(seperation, FInt.FromParts(0, 600));
+
+        if(!canFindNewTarget)
+        {
+            FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
+            AddSteeringForce(seperationEnemyUnits, FInt.FromParts(1, 0));
+        }
+
+        FPoint avoidance = ComputeObstacleAvoidance();
+        AddSteeringForce(avoidance, FInt.FromParts(1, 0));
     }
 
     void AddSteeringForce(FPoint steeringForce, FInt weight)
@@ -147,60 +271,47 @@ public class Unit : Boid, LockStep
         Fvelocity.Y += steeringForce.Y * weight;
     }
 
-    FPoint ComputeAlignment(List<FActor> actors)
+    bool LineIntersectsObstacle(FPoint ahead, FActor obstacle)
     {
-        FPoint averageVelocity = FPoint.Create();
-        int neighborCount = 0;
+        if (obstacle == null)
+            return false;
 
-        for (int i = 0; i < actors.Count; i++)
-        {
-            averageVelocity = FPoint.VectorAdd(averageVelocity, actors[i].GetComponent<FActor>().GetFVelocity());
-            neighborCount++;
-        }
+        FInt radius = obstacle.GetFBoundingRadius() * 2;
 
-        if (neighborCount == 0)
-            return averageVelocity;
+        Gizmos.color = Color.yellow;
+        if(playerID == 0)
+            Debug.DrawLine(new Vector2(ahead.X.ToFloat(), ahead.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
 
-        averageVelocity = FPoint.VectorDivide(averageVelocity, neighborCount);
-
-        return FPoint.Normalize(FPoint.Create(averageVelocity.X, averageVelocity.Y));
+        FInt distA = (ahead.X - obstacle.GetFPosition().X) * (ahead.X - obstacle.GetFPosition().X) + (ahead.Y - obstacle.GetFPosition().Y) * (ahead.Y - obstacle.GetFPosition().Y);
+        return distA <= radius;
     }
 
-    FPoint ComputeCohesion(List<FActor> actors)
+    bool LineIntersectsObstacle(FPoint aheadHalf, FPoint aheadFull, FActor obstacle)
     {
-        FPoint averagePosition = FPoint.Create();
-        int neighborCount = 0;
-
-        for (int i = 0; i < actors.Count; i++)
-        {
-            averagePosition = FPoint.VectorAdd(averagePosition, actors[i].GetComponent<FActor>().GetFPosition());
-            neighborCount++;
-        }
-
-        if (neighborCount == 0)
-            return averagePosition;
-
-        averagePosition = FPoint.VectorDivide(averagePosition, neighborCount);
-        averagePosition = FPoint.VectorSubtract(averagePosition, Fpos);
-
-        return FPoint.Normalize(averagePosition);
+        FInt radius = FInt.Create(1);
+        FInt distA = (aheadFull.X- obstacle.GetFPosition().X) * (aheadFull.X - obstacle.GetFPosition().X) + (aheadFull.Y - obstacle.GetFPosition().Y) * (aheadFull.Y - obstacle.GetFPosition().Y);
+        FInt distB = (aheadHalf.X - obstacle.GetFPosition().X) * (aheadHalf.X - obstacle.GetFPosition().X) + (aheadHalf.Y - obstacle.GetFPosition().Y) * (aheadHalf.Y - obstacle.GetFPosition().Y);
+        return distA <= radius || distB < radius;
     }
 
-    FPoint ComputeSeek(FActor leader)
+    FPoint ComputeSeek(FActor leader, bool slowDown)
     {
-        FPoint steer = FPoint.Create();
+        if (leader == null)
+            return FidleVelocity;
+
+        FPoint steer = FidleVelocity;
         FInt desiredSlowArea = FInt.FromParts(1, 0);
         FInt dist = FindDistanceToUnit(parentSquad);
         steer = FPoint.VectorSubtract(leader.GetFPosition(), Fpos);
 
-        if (dist < desiredSlowArea)
+        if (slowDown && dist < desiredSlowArea)
         {
             // Inside the slowing area
             steer = FPoint.Normalize(steer);
             steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
             steer = FPoint.VectorMultiply(steer, (dist / desiredSlowArea));
 
-            if (leader && dist < desiredSlowArea / 2)
+            if (leader && dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
                 currentState = UNIT_STATES.IDLE;
             }
@@ -219,8 +330,8 @@ public class Unit : Boid, LockStep
 
     FPoint ComputeSeperation(List<FActor> actors)
     {
-        FPoint steer = FPoint.Create();
-        FInt desiredseparation = FInt.FromParts(0, 500);
+        FPoint steer = FidleVelocity;
+        FInt desiredseparation = FInt.FromParts(0, 350);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
@@ -258,59 +369,45 @@ public class Unit : Boid, LockStep
         return steer;
     }
 
-    FPoint ComputerSeekFormationPostion(FActor leader)
+    FPoint ComputeObstacleAvoidance()
     {
-        FInt distX = leader.GetFPosition().X - (GetFPosition().X + squadPosOffset.X);
-        FInt distY = leader.GetFPosition().Y - (GetFPosition().Y + squadPosOffset.Y);
+        FaheadFull = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
+        FaheadFull = FPoint.VectorMultiply(FaheadFull, maxSeeAhead);
 
-        FPoint vector;
-        if (FPoint.Sqrt((distX * distX) + (distY * distY)) > FInt.Create(1))
-            vector = FPoint.Normalize(FPoint.Create(distX, distY));
-        else
-            vector = FPoint.Normalize(FPoint.Create(distX, distY));
+        FaheadHalf = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
+        FaheadHalf = FPoint.VectorMultiply(FaheadHalf, maxSeeAhead * FInt.FromParts(0, 500));
 
-        return vector;
-    }
-
-    FPoint ComputeObstacleAvoidance(GameObject[] obstacles)
-    {
-        FPoint vector = FPoint.Create();
-        int neighborCount = 0;
+        FPoint steer = FPoint.Create();
 
         for (int i = 0; i < obstacles.Length; i++)
         {
-            FInt dist = FindDistanceToUnit(obstacles[i].GetComponent<FActor>());
-            if (dist < FInt.FromParts(1, 700) && dist != 0)
+            FActor obstacle = obstacles[i].GetComponent<FActor>();
+            if (LineIntersectsObstacle(FaheadHalf, FaheadFull, obstacle))
             {
-                FInt vx = (obstacles[i].GetComponent<FActor>().GetFPosition().X - Fpos.X);
-                FInt vy = (obstacles[i].GetComponent<FActor>().GetFPosition().Y - Fpos.Y);
-
-                if (vx != 0)
-                    vx = FInt.FromParts(0, 600) / vx;
-
-                if (vy != 0)
-                    vy = FInt.FromParts(0, 600) / vy;
-
-                neighborCount++;
-
-                vector.X += vx;
-                vector.Y += vy;
+                steer.X = FaheadFull.X - obstacle.GetFPosition().X;
+                steer.Y = FaheadFull.Y - obstacle.GetFPosition().Y;
+                steer = FPoint.Normalize(steer);
             }
         }
 
-        if (neighborCount == 0)
-            return vector;
+        if (steer.X != 0 || steer.Y != 0)
+        {
+            steer = FPoint.Normalize(steer);
+            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorSubtract(steer, Fvelocity);
+        }
 
-        vector = FPoint.VectorDivide(vector, neighborCount);
-        vector.X *= -1;
-        vector.Y *= -1;
-
-        return vector;
+        return steer;
     }
 
     FInt FindDistanceToUnit(FActor unit)
     {
-        FPoint dist = FPoint.VectorSubtract(unit.GetFPosition(), Fpos);
+        return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
+    }
+
+    FInt FindDistanceToPoint(FPoint a, FPoint b)
+    {
+        FPoint dist = FPoint.VectorSubtract(a, b);
         return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
     }
 
@@ -330,17 +427,34 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
-        if (parentSquad.faceDir == -1)
+        if(currentState != UNIT_STATES.ATTACKING && currentState != UNIT_STATES.CHASE)
         {
-            transform.localScale = new Vector3(-.6f, .6f, 1f);
+            if (parentSquad.faceDir == -1)
+            {
+                transform.localScale = new Vector3(-.6f, .6f, 1f);
+            }
+
+            else if (parentSquad.faceDir == 1)
+            {
+                transform.localScale = new Vector3(.6f, .6f, 1.0f);
+            }
         }
 
-        else if (parentSquad.faceDir == 1)
+        else if(targetEnemy != null)
         {
-            transform.localScale = new Vector3(.6f, .6f, 1.0f);
+            if (Fpos.X < targetEnemy.GetFPosition().X)
+            {
+                transform.localScale = new Vector3(-.6f, .6f, 1f);
+            }
+
+            else if (Fpos.X > targetEnemy.GetFPosition().X)
+            {
+                transform.localScale = new Vector3(.6f, .6f, 1.0f);
+            }
         }
 
-        if(Fvelocity.X == 0 && Fvelocity.Y == 0)
+
+        if(currentState == UNIT_STATES.IDLE)
         {
             animator.SetBool("moving", false);
         }
@@ -385,8 +499,8 @@ public class Unit : Boid, LockStep
 
     void Attack()
     {
-        currentState = UNIT_STATES.ATTACKING;
-
+        //targetEnemy.GetComponent<Unit>().Kill();
+        
         // Trigger attack anim
     }
 
@@ -402,8 +516,17 @@ public class Unit : Boid, LockStep
     {
         parentSquad.RemoveUnit(this);
         currentState = UNIT_STATES.DYING;
+
+        if (isLeader)
+            parentSquad.FindNewLeader();
+
+        Invoke("Destroy", 0f); // TODO: get death anim duration
         // Trigger Kill animation
-        Invoke("Destroy", 1f); // TODO: get death anim duration
     }
 
+    void OnDrawGizmos()
+    {
+        Gizmos.color = new Color(0.5f, 0.2f, 1.0f, 0.8f);
+        Gizmos.DrawWireSphere(GetRealPosToVector3(), boundingRadius);
+    }
 }

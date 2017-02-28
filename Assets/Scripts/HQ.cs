@@ -24,7 +24,7 @@ public class HQ : MonoBehaviour {
             GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
             for(int i = 0; i < squads.Length; i++)
             {
-                if (squads[i].GetComponent<Squad>().playerIndex == this.playerIndex)
+                if (squads[i].GetComponent<Squad>().playerID == this.playerIndex)
                     squads[i].GetComponent<Squad>().AddUnit(spawnedUnit.GetComponent<Unit>());
             }
             timeSinceSpawn = 0.0f;

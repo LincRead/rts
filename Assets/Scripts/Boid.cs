@@ -9,6 +9,7 @@ public class Boid : FActor, LockStep
     protected Node currentStandingNode;
     protected int currentWaypointTarget = 0;
 
+    [Header("Boid debug values")]
     public Vector2 debugVectorValue;
 
     protected override void Start()
