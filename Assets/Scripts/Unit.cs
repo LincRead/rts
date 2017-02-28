@@ -133,7 +133,6 @@ public class Unit : Boid, LockStep
 
         HandleAnimations();
         ExecuteMovement();
-        //HandleCollision();
     }
 
     public void MoveToTarget()
@@ -462,38 +461,6 @@ public class Unit : Boid, LockStep
         else
         {
             animator.SetBool("moving", true);
-        }
-    }
-
-    void HandleCollision()
-    {
-        FRectangle r1 = GetCollisionRectangle();
-        for (int i = 0; i < obstacles.Length; i++)
-        {
-            FRectangle r2 = obstacles[i].GetComponent<FActor>().GetCollisionRectangle();
-
-            if (r1.X < r2.X + r2.W &&
-               r1.X + r1.W > r2.X &&
-               r1.Y < r2.Y + r2.H &&
-               r1.Y + r1.H > r2.Y)
-            {
-                if (Fvelocity.X < 0)
-                    Fpos.X += parentSquad.unitMoveSpeed;
-                if (Fvelocity.X > 0)
-                    Fpos.X -= parentSquad.unitMoveSpeed;
-            }
-
-            r1 = GetCollisionRectangle();
-            if (r1.X < r2.X + r2.W &&
-               r1.X + r1.W > r2.X &&
-               r1.Y < r2.Y + r2.H &&
-               r1.Y + r1.H > r2.Y)
-            {
-                if (Fvelocity.Y < 0)
-                    Fpos.Y += parentSquad.unitMoveSpeed;
-                if (Fvelocity.Y > 0)
-                    Fpos.Y -= parentSquad.unitMoveSpeed;
-            }
         }
     }
 
