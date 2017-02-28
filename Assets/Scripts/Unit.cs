@@ -8,7 +8,7 @@ public class Unit : Boid, LockStep
     {
         IDLE,
         MOVE,
-        CHASE,
+        CHASING,
         ATTACKING,
         DYING
     }
@@ -116,12 +116,12 @@ public class Unit : Boid, LockStep
                 }
 
                 else if (currentState == UNIT_STATES.IDLE)
-                    currentState = UNIT_STATES.CHASE;
+                    currentState = UNIT_STATES.CHASING;
             }
         }
 
         // No more targets
-        else if(currentState == UNIT_STATES.ATTACKING)
+        else if(currentState == UNIT_STATES.ATTACKING || currentState == UNIT_STATES.CHASING)
         {
             if (isLeader)
                 parentSquad.SetFPosition(GetFPosition());
@@ -197,7 +197,7 @@ public class Unit : Boid, LockStep
         {
             case UNIT_STATES.IDLE: HandleIdling(); break;
             case UNIT_STATES.MOVE: HandleMoving(); break;
-            case UNIT_STATES.CHASE: HandleChasingUnit(); break;
+            case UNIT_STATES.CHASING: HandleChasingUnit(); break;
             case UNIT_STATES.ATTACKING: HandleAttacking(); break;
             case UNIT_STATES.DYING: HandleDying(); break;
         }
@@ -427,7 +427,7 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
-        if(currentState != UNIT_STATES.ATTACKING && currentState != UNIT_STATES.CHASE)
+        if(currentState != UNIT_STATES.ATTACKING && currentState != UNIT_STATES.CHASING)
         {
             if (parentSquad.faceDir == -1)
             {
