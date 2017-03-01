@@ -15,6 +15,10 @@ public class Unit : Boid, LockStep
 
     int hitpoints = 2;
 
+    [Header("Prefabs")]
+    public GameObject healthBarPrefab;
+    GameObject healthBar;
+
     [Header("Debug state")]
     public UNIT_STATES currentState = UNIT_STATES.MOVE;
 
@@ -50,6 +54,10 @@ public class Unit : Boid, LockStep
         GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
         for (var i = 0; i < obstaclesArray.Length; i++)
             obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
+
+        healthBar = GameObject.Instantiate(healthBarPrefab, 
+            new Vector3(transform.position.x, transform.position.y - 0.1f, 0.0f), Quaternion.identity) as GameObject;
+        healthBar.GetComponent<Transform>().SetParent(transform);
     }
 
     public void SetSquad(Squad squad)
