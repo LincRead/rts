@@ -3,7 +3,7 @@ using System.Collections;
 
 public class FActor : MonoBehaviour, LockStep
 {
-    [Header("Player ID")]
+    [Header("FActor")]
     public int playerID = -1;
 
     protected FPoint Fpos;
@@ -11,7 +11,6 @@ public class FActor : MonoBehaviour, LockStep
 
     public float boundingRadius = 1;
     FInt FboundingRadius;
-
     protected bool colliding = false;
 
     protected SpriteRenderer spriteRenderer;
@@ -42,16 +41,9 @@ public class FActor : MonoBehaviour, LockStep
 
     public void SetFPosition(FPoint FposNew) { Fpos = FposNew; }
     public FPoint GetFPosition() { return Fpos; }
-
-    public FPoint GetFVelocity()
-    {
-        return Fvelocity;
-    }
-
-    public Vector3 GetRealPosToVector3()
-    {
-        return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), Fpos.Y.ToFloat());
-    }
+    public FPoint GetFVelocity() { return Fvelocity; }
+    public Vector3 GetRealPosToVector3() { return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), Fpos.Y.ToFloat()); }
+    public FInt GetFBoundingRadius() { return FboundingRadius; }
 
     public FRectangle GetCollisionRectangle()
     {
@@ -65,10 +57,5 @@ public class FActor : MonoBehaviour, LockStep
             centerY,
             FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.x),
             FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.y));
-    }
-
-    public FInt GetFBoundingRadius()
-    {
-        return FboundingRadius;
     }
 }
