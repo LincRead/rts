@@ -24,7 +24,7 @@ public class Unit : Boid, LockStep
     Animator animator;
     Squad parentSquad;
     FActor targetEnemy;
-    GameObject[] obstacles;
+    List<FActor> obstacles = new List<FActor>(20);
     FPoint FdirToLeader;
     FPoint FaheadFull;
     FPoint FaheadHalf;
@@ -42,7 +42,11 @@ public class Unit : Boid, LockStep
     {
         base.Start();
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
-        obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+
+        GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
+        for (var i = 0; i < obstaclesArray.Length; i++)
+            obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
+
         animator = GetComponent<Animator>();
     }
 
@@ -56,6 +60,8 @@ public class Unit : Boid, LockStep
     {
         if(isLeader)
             spriteRenderer.color = Color.red;
+        else if (currentState == UNIT_STATES.CHASING && playerID == 0)
+            spriteRenderer.color = Color.green;
         else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
             spriteRenderer.color = Color.blue;
         else if(playerID == 1)
@@ -98,7 +104,7 @@ public class Unit : Boid, LockStep
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
             FInt dist = FindDistanceToUnit(enemyActorsClose[i]);
-            if(dist < shortestDistance)
+            if(dist < FInt.Create(3) && dist < shortestDistance)
             {
                 shortestDistance = dist;
                 targetEnemy = enemyActorsClose[i];
@@ -115,7 +121,7 @@ public class Unit : Boid, LockStep
                     currentState = UNIT_STATES.ATTACKING;
                 }
 
-                else if (currentState == UNIT_STATES.IDLE)
+                else if(parentSquad.leader.currentState != UNIT_STATES.MOVE && currentState != UNIT_STATES.ATTACKING)
                     currentState = UNIT_STATES.CHASING;
             }
         }
@@ -130,6 +136,10 @@ public class Unit : Boid, LockStep
         }
 
         HandleCurrentState();
+
+        // ALWAYS avoid obstacles
+        FPoint avoidance = ComputeObstacleAvoidance(obstacles);
+        AddSteeringForce(avoidance, FInt.FromParts(1, 0));
 
         HandleAnimations();
         ExecuteMovement();
@@ -205,8 +215,6 @@ public class Unit : Boid, LockStep
     void HandleIdling()
     {
         Fvelocity = FidleVelocity;
-        //FPoint seperation = ComputeSeperation(friendlyActorsClose);
-        //AddSteeringForce(seperation, FInt.FromParts(1, 0));
     }
 
     void HandleChasingUnit()
@@ -215,9 +223,14 @@ public class Unit : Boid, LockStep
 
         // Steer away from friendly units
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
-        AddSteeringForce(seperation, FInt.FromParts(0, 600));
+        AddSteeringForce(seperation, FInt.FromParts(1, 0));
+
+        // Find a way around friendly units
+        FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
+        AddSteeringForce(avoidance, FInt.FromParts(0, 300));
 
         // Steer towards enemy target
+
         FPoint seek = ComputeSeek(targetEnemy, false);
         AddSteeringForce(seek, FInt.FromParts(0, 300));
     }
@@ -259,9 +272,6 @@ public class Unit : Boid, LockStep
             FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
             AddSteeringForce(seperationEnemyUnits, FInt.FromParts(1, 0));
         }
-
-        FPoint avoidance = ComputeObstacleAvoidance();
-        AddSteeringForce(avoidance, FInt.FromParts(1, 0));
     }
 
     void AddSteeringForce(FPoint steeringForce, FInt weight)
@@ -287,7 +297,7 @@ public class Unit : Boid, LockStep
 
     bool LineIntersectsObstacle(FPoint aheadHalf, FPoint aheadFull, FActor obstacle)
     {
-        FInt radius = FInt.Create(1);
+        FInt radius = obstacle.GetFBoundingRadius();
         FInt distA = (aheadFull.X- obstacle.GetFPosition().X) * (aheadFull.X - obstacle.GetFPosition().X) + (aheadFull.Y - obstacle.GetFPosition().Y) * (aheadFull.Y - obstacle.GetFPosition().Y);
         FInt distB = (aheadHalf.X - obstacle.GetFPosition().X) * (aheadHalf.X - obstacle.GetFPosition().X) + (aheadHalf.Y - obstacle.GetFPosition().Y) * (aheadHalf.Y - obstacle.GetFPosition().Y);
         return distA <= radius || distB < radius;
@@ -368,7 +378,7 @@ public class Unit : Boid, LockStep
         return steer;
     }
 
-    FPoint ComputeObstacleAvoidance()
+    FPoint ComputeObstacleAvoidance(List<FActor> actors)
     {
         FaheadFull = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
         FaheadFull = FPoint.VectorMultiply(FaheadFull, maxSeeAhead);
@@ -378,9 +388,9 @@ public class Unit : Boid, LockStep
 
         FPoint steer = FPoint.Create();
 
-        for (int i = 0; i < obstacles.Length; i++)
+        for (int i = 0; i < actors.Count; i++)
         {
-            FActor obstacle = obstacles[i].GetComponent<FActor>();
+            FActor obstacle = actors[i].GetComponent<FActor>();
             if (LineIntersectsObstacle(FaheadHalf, FaheadFull, obstacle))
             {
                 steer.X = FaheadFull.X - obstacle.GetFPosition().X;
@@ -397,17 +407,6 @@ public class Unit : Boid, LockStep
         }
 
         return steer;
-    }
-
-    FInt FindDistanceToUnit(FActor unit)
-    {
-        return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
-    }
-
-    FInt FindDistanceToPoint(FPoint a, FPoint b)
-    {
-        FPoint dist = FPoint.VectorSubtract(a, b);
-        return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
     }
 
     void MoveTowardsSquadLeader()
@@ -489,6 +488,17 @@ public class Unit : Boid, LockStep
 
         Invoke("Destroy", 0f); // TODO: get death anim duration
         // Trigger Kill animation
+    }
+
+    FInt FindDistanceToUnit(FActor unit)
+    {
+        return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
+    }
+
+    FInt FindDistanceToPoint(FPoint a, FPoint b)
+    {
+        FPoint dist = FPoint.VectorSubtract(a, b);
+        return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
     }
 
     void OnDrawGizmos()

@@ -35,7 +35,7 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(20);
+        InitUnits(30);
     }
 
     void InitUnits(int num)
