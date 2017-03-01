@@ -42,7 +42,7 @@ public class Squad : Boid, LockStep {
     {
         for (var i = 0; i < num; i++)
         {
-            Vector2 pos = new Vector2(transform.position.x + (i % 5f) * 0.2f, transform.position.y + (i % 2f) * 0.2f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.5f, transform.position.y + (i % 5) * 0.5f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             AddUnit(newUnit.GetComponent<Unit>());

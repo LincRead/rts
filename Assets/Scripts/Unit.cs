@@ -38,6 +38,9 @@ public class Unit : Boid, LockStep
     List<Node> neighbours;
     Grid grid;
 
+    float timeBetweenAttacks = 0.5f;
+    float timeSinceLastAttack = 0.0f; 
+
     protected override void Start()
     {
         base.Start();
@@ -60,12 +63,10 @@ public class Unit : Boid, LockStep
     {
         if(isLeader)
             spriteRenderer.color = Color.red;
-        else if (currentState == UNIT_STATES.CHASING && playerID == 0)
-            spriteRenderer.color = Color.green;
         else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
-            spriteRenderer.color = Color.blue;
+            spriteRenderer.color = Color.green;
         else if(playerID == 1)
-            spriteRenderer.color = Color.magenta;
+            spriteRenderer.color = Color.blue;
         else
             spriteRenderer.color = Color.white;
 
@@ -98,26 +99,30 @@ public class Unit : Boid, LockStep
         FindCloseUnits();
         FindDirToLeader();
 
-        // Attack?
         FInt shortestDistance = FInt.Create(1000);
-        targetEnemy = null;
+        // Find new target enemy
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
             FInt dist = FindDistanceToUnit(enemyActorsClose[i]);
-            if(dist < FInt.Create(3) && dist < shortestDistance)
+            if (dist < FInt.Create(3) && dist < shortestDistance)
             {
                 shortestDistance = dist;
                 targetEnemy = enemyActorsClose[i];
             }
         }
 
+
+        // Found target enemy
         if(targetEnemy != null)
         {
+            // This is reset every time a move command is given
             if(canFindNewTarget)
             {
                 FPoint FAttackPoint = FPoint.VectorAdd(GetFPosition(), Fvelocity);
                 if (LineIntersectsObstacle(FAttackPoint, targetEnemy))
                 {
+                    // Refactor to InitAttackState()
+                    timeSinceLastAttack = 0.0f;
                     currentState = UNIT_STATES.ATTACKING;
                 }
 
@@ -147,7 +152,8 @@ public class Unit : Boid, LockStep
 
     public void MoveToTarget()
     {
-        currentState = UNIT_STATES.MOVE; currentState = UNIT_STATES.MOVE;
+        targetEnemy = null;
+        currentState = UNIT_STATES.MOVE;
         canFindNewTarget = false;
         Invoke("CanFindNewTarget", 1f); // todo lockstep
     }
@@ -239,8 +245,13 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
-        // Attack
-        Attack();
+        timeSinceLastAttack += Time.deltaTime;
+
+        if(timeSinceLastAttack >= timeBetweenAttacks)
+        {
+            timeSinceLastAttack = 0.0f;
+            Attack();
+        } 
     }
 
     void HandleDying()
@@ -465,9 +476,20 @@ public class Unit : Boid, LockStep
 
     void Attack()
     {
-        //targetEnemy.GetComponent<Unit>().Kill();
-        
+
         // Trigger attack anim
+
+        Unit unitScript = targetEnemy.GetComponent<Unit>();
+
+        // Damage target enemy
+        unitScript.Damage(parentSquad.unitAttackDamage);
+
+        // Reset state
+        if (unitScript.GetHitPoints() == 0)
+        {
+            targetEnemy = null;
+            MoveToTarget();
+        }
     }
 
     void Damage(int damageValue)
@@ -475,7 +497,10 @@ public class Unit : Boid, LockStep
         hitpoints -= damageValue;
 
         if (hitpoints <= 0)
+        {
+            hitpoints = 0;
             Kill();
+        }
     }
 
     void Kill()
@@ -486,7 +511,7 @@ public class Unit : Boid, LockStep
         if (isLeader)
             parentSquad.FindNewLeader();
 
-        Invoke("Destroy", 0f); // TODO: get death anim duration
+        Invoke("Destroy", 0.1f); // TODO: get death anim duration
         // Trigger Kill animation
     }
 
@@ -506,4 +531,6 @@ public class Unit : Boid, LockStep
         Gizmos.color = new Color(0.5f, 0.2f, 1.0f, 0.8f);
         Gizmos.DrawWireSphere(GetRealPosToVector3(), boundingRadius);
     }
+
+    int GetHitPoints() { return hitpoints; }
 }
