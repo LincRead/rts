@@ -22,7 +22,7 @@ public class Squad : Boid, LockStep {
     public SQUAD_STATES state = SQUAD_STATES.IDLE;
 
     [Header("Units")]
-    public int unitMaxHitpoints = 2;
+    public int unitMaxHitpoints = 10;
     public int unitAttackDamage = 1;
     public FInt unitMoveSpeed = FInt.FromParts(0, 400);
     List<Unit> units = new List<Unit>(30);
@@ -37,14 +37,14 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(6);
+        InitUnits(25);
     }
 
     void InitUnits(int num)
     {
         for (var i = 0; i < num; i++)
         {
-            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.5f, transform.position.y + (i % 2) * 0.5f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.5f, transform.position.y + (i % 3) * 0.5f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             AddUnit(newUnit.GetComponent<Unit>());

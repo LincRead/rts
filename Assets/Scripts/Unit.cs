@@ -13,7 +13,7 @@ public class Unit : Boid, LockStep
         DYING
     }
 
-    int hitpoints = 2;
+    int hitpoints = 0;
 
     [Header("Prefabs")]
     public GameObject healthBarPrefab;
@@ -41,8 +41,8 @@ public class Unit : Boid, LockStep
     List<Node> neighbours;
     Grid grid;
 
-    float timeBetweenAttacks = 0.5f;
-    float timeSinceLastAttack = 0.0f; 
+    int ticksBetweenAttacks = 20;
+    int ticksSinceLastAttack = 0; 
 
     protected override void Start()
     {
@@ -56,7 +56,7 @@ public class Unit : Boid, LockStep
             obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
 
         healthBar = GameObject.Instantiate(healthBarPrefab, 
-            new Vector3(transform.position.x, transform.position.y - 0.1f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
         healthBar.GetComponent<Transform>().SetParent(transform);
     }
 
@@ -70,6 +70,22 @@ public class Unit : Boid, LockStep
     {
         DebugStateWithColor();
         SmoothMovement();
+
+        // TODO move to hp bar script
+        if (parentSquad)
+        {
+            float scaleX = ((float)hitpoints / (float)parentSquad.unitMaxHitpoints);
+            healthBar.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.5f, 3.0f, 0.0f);
+
+            if (scaleX <= 0.4f)
+                healthBar.GetComponent<SpriteRenderer>().color = Color.red;
+            else if (scaleX < 0.6f)
+                healthBar.GetComponent<SpriteRenderer>().color = new Color(1.0f, 0.7f, 0.0f);
+            else if (scaleX < 0.8f)
+                healthBar.GetComponent<SpriteRenderer>().color = Color.yellow;
+            else
+                healthBar.GetComponent<SpriteRenderer>().color = Color.green;
+        }
     }
 
     void DebugStateWithColor()
@@ -205,11 +221,11 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
-        timeSinceLastAttack  += Time.deltaTime;
+        ticksSinceLastAttack += 1;
 
-        if (timeSinceLastAttack >= timeBetweenAttacks)
+        if (ticksSinceLastAttack >= ticksBetweenAttacks)
         {
-            timeSinceLastAttack = 0.0f;
+            ticksSinceLastAttack = 0;
             Attack();
         } 
     }
@@ -433,7 +449,7 @@ public class Unit : Boid, LockStep
             {
                 // Reset timer before first blow
                 if(currentState != UNIT_STATES.ATTACKING)
-                    timeSinceLastAttack = 0.0f;
+                    ticksSinceLastAttack = 0;
 
                 currentState = UNIT_STATES.ATTACKING;
             }
