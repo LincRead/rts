@@ -27,10 +27,9 @@ public class FActor : MonoBehaviour, LockStep
         transform.position = GetRealPosToVector3();
     }
 
-    public float y;
     public virtual void LockStepUpdate()
     {
-        y = spriteRenderer.bounds.min.y;
+
     }
 
     protected void ResetVelocity()
