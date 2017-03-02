@@ -1,33 +1,34 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class HQ : MonoBehaviour {
+public class HQ : FActor {
 
-    public float timeBetweenSpawn = 3f;
-    private float timeSinceSpawn = 0.0f;
+    [Header("HQ")]
+    public int ticksBetweenSpawn = 40;
+    private int ticksSinceSpawn = 0;
 
     public GameObject unitPrefab;
 
-    public int playerIndex = -1;
-
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-        timeSinceSpawn += Time.deltaTime;
-        if(timeSinceSpawn >= timeBetweenSpawn)
+    public override void LockStepUpdate()
+    {
+        ticksSinceSpawn++;
+        if (ticksSinceSpawn == ticksBetweenSpawn)
         {
-            GameObject spawnedUnit = GameObject.Instantiate(unitPrefab, transform.position + new Vector3(0.0f, -1f, 0.0f), Quaternion.identity) as GameObject;
+            GameObject spawnedUnit = GameObject.Instantiate(unitPrefab, transform.position + new Vector3(0.0f, -2f, 0.0f), Quaternion.identity) as GameObject;
             GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
-            for(int i = 0; i < squads.Length; i++)
+            for (int i = 0; i < squads.Length; i++)
             {
-                if (squads[i].GetComponent<Squad>().playerID == this.playerIndex)
+                if (squads[i].GetComponent<Squad>().playerID == this.playerID)
                     squads[i].GetComponent<Squad>().AddUnit(spawnedUnit.GetComponent<Unit>());
             }
-            timeSinceSpawn = 0.0f;
+
+            ticksSinceSpawn = 0;
         }
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(GetRealPosToVector3(), FboundingRadius.ToFloat());
     }
 }

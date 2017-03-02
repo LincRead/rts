@@ -33,5 +33,9 @@ public class GameController : MonoBehaviour {
         GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
         for(int i = 0; i < squads.Length; i++)
             squads[i].GetComponent<Squad>().LockStepUpdate();
+
+        GameObject[] obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+        for (int i = 0; i < obstacles.Length; i++)
+            obstacles[i].GetComponent<FActor>().LockStepUpdate();
     }
 }

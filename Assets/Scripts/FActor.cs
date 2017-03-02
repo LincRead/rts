@@ -10,8 +10,7 @@ public class FActor : MonoBehaviour, LockStep
     protected FPoint Fvelocity = FPoint.Create(FInt.Create(0), FInt.Create(0));
 
     public float boundingRadius = 1;
-    FInt FboundingRadius;
-    protected bool colliding = false;
+    protected FInt FboundingRadius;
 
     protected SpriteRenderer spriteRenderer;
 
@@ -44,18 +43,4 @@ public class FActor : MonoBehaviour, LockStep
     public FPoint GetFVelocity() { return Fvelocity; }
     public Vector3 GetRealPosToVector3() { return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), Fpos.Y.ToFloat()); }
     public FInt GetFBoundingRadius() { return FboundingRadius; }
-
-    public FRectangle GetCollisionRectangle()
-    {
-        FInt centerY = Fpos.Y - FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.y / 2);
-
-        if (spriteRenderer != null && spriteRenderer.sprite.pivot.y == 0)
-            centerY += FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.y / 2);
-
-        return FRectangle.Create(
-            Fpos.X - FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.x / 2),
-            centerY,
-            FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.x),
-            FInt.FromFloat(GetComponent<SpriteRenderer>().bounds.size.y));
-    }
 }
