@@ -145,6 +145,9 @@ public class Unit : Boid, LockStep
 
     void FindCloseUnits()
     {
+        if (currentStandingNode == null)
+            return;
+
         friendlyActorsClose.Clear();
         enemyActorsClose.Clear();
 
@@ -294,6 +297,11 @@ public class Unit : Boid, LockStep
     {
         Fpos.X += Fvelocity.X * parentSquad.unitMoveSpeed;
         Fpos.Y += Fvelocity.Y * parentSquad.unitMoveSpeed;
+
+        if (Fpos.X > grid.FmaxX) Fpos.X = grid.FmaxX;
+        if (Fpos.X < grid.FminX) Fpos.X = grid.FminX;
+        if (Fpos.Y > grid.FmaxY) Fpos.Y = grid.FmaxY;
+        if (Fpos.Y < grid.FminY) Fpos.Y = grid.FminY;
     }
 
     protected void AddSteeringForce(FPoint steeringForce, FInt weight)

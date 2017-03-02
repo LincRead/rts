@@ -11,6 +11,10 @@ public class Grid : MonoBehaviour
     public int gridSizeY;
     public float nodeRadius;
     private float nodeDiameter;
+    public FInt FminX; // Units can't move beyond this point
+    public FInt FmaxX; // Units can't move beyond this point
+    public FInt FminY; // Units can't move beyond this point
+    public FInt FmaxY; // Units can't move beyond this point
 
     // The actual size in pixels
     private Vector2 gridWorldSize;
@@ -29,6 +33,10 @@ public class Grid : MonoBehaviour
         nodeDiameter = nodeRadius * 2;
         gridWorldSize.x = gridSizeX * nodeDiameter;
         gridWorldSize.y = gridSizeY * nodeDiameter;
+        FminX = FInt.FromFloat(-(gridSizeX / 2) * nodeDiameter);
+        FmaxX = FInt.FromFloat((gridSizeX / 2) * nodeDiameter);
+        FminY = FInt.FromFloat(-(gridSizeY / 2) * nodeDiameter);
+        FmaxY = FInt.FromFloat((gridSizeY / 2) * nodeDiameter);
         CreateGrid();
     }
 

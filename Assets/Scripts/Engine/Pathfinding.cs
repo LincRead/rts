@@ -32,7 +32,7 @@ public class Pathfinding : MonoBehaviour {
         // Outside grid
         if (node == null)
         {
-            Debug.LogError(name + " is standing outside grid");
+            Debug.LogError(name + " is standing outside of the Grid");
             return null;
         }
 
