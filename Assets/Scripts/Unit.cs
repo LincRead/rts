@@ -13,12 +13,6 @@ public class Unit : Boid, LockStep
         DYING
     }
 
-    int hitpoints = 0;
-
-    [Header("Prefabs")]
-    public GameObject healthBarPrefab;
-    GameObject healthBar;
-
     [Header("Debug state")]
     public UNIT_STATES currentState = UNIT_STATES.MOVE;
 
@@ -40,57 +34,49 @@ public class Unit : Boid, LockStep
     List<FActor> enemyActorsClose = new List<FActor>(30);
     List<Node> neighbours;
     Grid grid;
+    Health health;
 
     int ticksBetweenAttacks = 20;
-    int ticksSinceLastAttack = 0; 
+    int ticksSinceLastAttack = 0;
+    
+    void Awake()
+    {
+        animator = GetComponent<Animator>();
+
+        health = GetComponent<Health>();
+        if (health == null)
+            Debug.LogError("Unit always needs a Health script attached");
+    } 
 
     protected override void Start()
     {
         base.Start();
 
-        animator = GetComponent<Animator>();
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
         for (var i = 0; i < obstaclesArray.Length; i++)
             obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
-
-        healthBar = GameObject.Instantiate(healthBarPrefab, 
-            new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
-        healthBar.GetComponent<Transform>().SetParent(transform);
     }
 
     public void SetSquad(Squad squad)
     {
         parentSquad = squad;
-        hitpoints = squad.unitMaxHitpoints;
+        health.SetMaxHitpoints(squad.unitMaxHitpoints);
+        health.SetHitpoints(squad.unitMaxHitpoints);
     }
 
     void Update()
     {
         DebugStateWithColor();
         SmoothMovement();
-
-        // TODO move to hp bar script
-        if (parentSquad)
-        {
-            float scaleX = ((float)hitpoints / (float)parentSquad.unitMaxHitpoints);
-            healthBar.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.5f, 3.0f, 0.0f);
-
-            if (scaleX <= 0.4f)
-                healthBar.GetComponent<SpriteRenderer>().color = Color.red;
-            else if (scaleX < 0.6f)
-                healthBar.GetComponent<SpriteRenderer>().color = new Color(1.0f, 0.7f, 0.0f);
-            else if (scaleX < 0.8f)
-                healthBar.GetComponent<SpriteRenderer>().color = Color.yellow;
-            else
-                healthBar.GetComponent<SpriteRenderer>().color = Color.green;
-        }
     }
 
     void DebugStateWithColor()
     {
-        if (isLeader)
+        if (IsDead())
+            spriteRenderer.color = Color.magenta;
+        else if (isLeader)
             spriteRenderer.color = Color.red;
         else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
             spriteRenderer.color = Color.green;
@@ -156,8 +142,6 @@ public class Unit : Boid, LockStep
         canFindNewTarget = false;
         Invoke("CanFindNewTarget", 1f); // Todo lockstep
     }
-
-    void CanFindNewTarget() { canFindNewTarget = true; }
 
     void FindCloseUnits()
     {
@@ -263,7 +247,7 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
-        if (currentState != UNIT_STATES.ATTACKING && currentState != UNIT_STATES.CHASING)
+        if (currentState == UNIT_STATES.MOVE)
         {
             if (parentSquad.faceDir == -1)
             {
@@ -300,25 +284,25 @@ public class Unit : Boid, LockStep
         }
     }
 
-    void AvoidObstacles()
+    protected void AvoidObstacles()
     {
         FPoint avoidance = ComputeObstacleAvoidance(obstacles);
         AddSteeringForce(avoidance, FInt.FromParts(1, 0));
     }
 
-    void ExecuteMovement()
+    protected void ExecuteMovement()
     {
         Fpos.X += Fvelocity.X * parentSquad.unitMoveSpeed;
         Fpos.Y += Fvelocity.Y * parentSquad.unitMoveSpeed;
     }
 
-    void AddSteeringForce(FPoint steeringForce, FInt weight)
+    protected void AddSteeringForce(FPoint steeringForce, FInt weight)
     {
         Fvelocity.X += steeringForce.X * weight;
         Fvelocity.Y += steeringForce.Y * weight;
     }
 
-    FPoint ComputeSeek(FActor leader, bool slowDown)
+    protected FPoint ComputeSeek(FActor leader, bool slowDown)
     {
         if (leader == null)
             return FidleVelocity;
@@ -352,7 +336,7 @@ public class Unit : Boid, LockStep
         return steer;
     }
 
-    FPoint ComputeSeperation(List<FActor> actors)
+    protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
         FInt desiredseparation = FInt.FromParts(0, 350);
@@ -393,7 +377,7 @@ public class Unit : Boid, LockStep
         return steer;
     }
 
-    FPoint ComputeObstacleAvoidance(List<FActor> actors)
+    protected FPoint ComputeObstacleAvoidance(List<FActor> actors)
     {
         FaheadFull = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
         FaheadFull = FPoint.VectorMultiply(FaheadFull, maxSeeAhead);
@@ -472,7 +456,7 @@ public class Unit : Boid, LockStep
         unitScript.Damage(parentSquad.unitAttackDamage);
 
         // Reset state
-        if (unitScript.GetHitPoints() == 0)
+        if (unitScript.IsDead())
         {
             targetEnemy = null;
             MoveToTarget();
@@ -481,13 +465,10 @@ public class Unit : Boid, LockStep
 
     void Damage(int damageValue)
     {
-        hitpoints -= damageValue;
+        health.ChangeHitpoints(-damageValue);
 
-        if (hitpoints <= 0)
-        {
-            hitpoints = 0;
+        if (health.IsHitpointsZero())
             Kill();
-        }
     }
 
     void Kill()
@@ -498,7 +479,8 @@ public class Unit : Boid, LockStep
         if (isLeader)
             parentSquad.FindNewLeader();
 
-        Invoke("Destroy", 0.1f); // TODO: get death anim duration
+        Invoke("Destroy", 1.5f); // TODO: get death anim duration
+        
         // Trigger Kill animation
     }
 
@@ -513,34 +495,13 @@ public class Unit : Boid, LockStep
         return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
     }
 
-    bool LineIntersectsObstacle(FPoint ahead, FActor obstacle)
-    {
-        if (obstacle == null)
-            return false;
-
-        FInt radius = obstacle.GetFBoundingRadius() * 2;
-
-        Gizmos.color = Color.yellow;
-        if (playerID == 0)
-            Debug.DrawLine(new Vector2(ahead.X.ToFloat(), ahead.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
-
-        FInt distA = (ahead.X - obstacle.GetFPosition().X) * (ahead.X - obstacle.GetFPosition().X) + (ahead.Y - obstacle.GetFPosition().Y) * (ahead.Y - obstacle.GetFPosition().Y);
-        return distA <= radius;
-    }
-
-    bool LineIntersectsObstacle(FPoint aheadHalf, FPoint aheadFull, FActor obstacle)
-    {
-        FInt radius = obstacle.GetFBoundingRadius();
-        FInt distA = (aheadFull.X - obstacle.GetFPosition().X) * (aheadFull.X - obstacle.GetFPosition().X) + (aheadFull.Y - obstacle.GetFPosition().Y) * (aheadFull.Y - obstacle.GetFPosition().Y);
-        FInt distB = (aheadHalf.X - obstacle.GetFPosition().X) * (aheadHalf.X - obstacle.GetFPosition().X) + (aheadHalf.Y - obstacle.GetFPosition().Y) * (aheadHalf.Y - obstacle.GetFPosition().Y);
-        return distA <= radius || distB < radius;
-    }
-
-    int GetHitPoints() { return hitpoints; }
-
     void OnDrawGizmos()
     {
         Gizmos.color = new Color(0.5f, 0.2f, 1.0f, 0.8f);
         Gizmos.DrawWireSphere(GetRealPosToVector3(), boundingRadius);
     }
+
+    void CanFindNewTarget() { canFindNewTarget = true; }
+
+    public bool IsDead() { return health.IsHitpointsZero(); }
 }

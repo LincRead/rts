@@ -49,4 +49,27 @@ public class Boid : FActor, LockStep
     {
 
     }
+
+    protected bool LineIntersectsObstacle(FPoint ahead, FActor obstacle)
+    {
+        if (obstacle == null)
+            return false;
+
+        FInt radius = obstacle.GetFBoundingRadius() * 2;
+
+        Gizmos.color = Color.yellow;
+        if (playerID == 0)
+            Debug.DrawLine(new Vector2(ahead.X.ToFloat(), ahead.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
+
+        FInt distA = (ahead.X - obstacle.GetFPosition().X) * (ahead.X - obstacle.GetFPosition().X) + (ahead.Y - obstacle.GetFPosition().Y) * (ahead.Y - obstacle.GetFPosition().Y);
+        return distA <= radius;
+    }
+
+    protected bool LineIntersectsObstacle(FPoint aheadHalf, FPoint aheadFull, FActor obstacle)
+    {
+        FInt radius = obstacle.GetFBoundingRadius();
+        FInt distA = (aheadFull.X - obstacle.GetFPosition().X) * (aheadFull.X - obstacle.GetFPosition().X) + (aheadFull.Y - obstacle.GetFPosition().Y) * (aheadFull.Y - obstacle.GetFPosition().Y);
+        FInt distB = (aheadHalf.X - obstacle.GetFPosition().X) * (aheadHalf.X - obstacle.GetFPosition().X) + (aheadHalf.Y - obstacle.GetFPosition().Y) * (aheadHalf.Y - obstacle.GetFPosition().Y);
+        return distA <= radius || distB < radius;
+    }
 }
