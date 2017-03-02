@@ -14,17 +14,23 @@ public class FActor : MonoBehaviour, LockStep
 
     protected SpriteRenderer spriteRenderer;
 
-    protected virtual void Start()
+    protected virtual void Awake()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
         Fpos.X = FInt.FromFloat(transform.localPosition.x);
         Fpos.Y = FInt.FromFloat(transform.localPosition.y);
         FboundingRadius = FInt.FromFloat(boundingRadius);
-        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
+    protected virtual void Start()
+    {
+        transform.position = GetRealPosToVector3();
+    }
+
+    public float y;
     public virtual void LockStepUpdate()
     {
-
+        y = spriteRenderer.bounds.min.y;
     }
 
     protected void ResetVelocity()
@@ -38,9 +44,17 @@ public class FActor : MonoBehaviour, LockStep
         Destroy(gameObject);
     }
 
+    public Vector3 GetRealPosToVector3() {
+        float z = 0.0f;
+
+        if (spriteRenderer != null)
+            z = spriteRenderer.bounds.min.y;
+
+        return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), z);
+    }
+
     public void SetFPosition(FPoint FposNew) { Fpos = FposNew; }
     public FPoint GetFPosition() { return Fpos; }
     public FPoint GetFVelocity() { return Fvelocity; }
-    public Vector3 GetRealPosToVector3() { return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), Fpos.Y.ToFloat()); }
     public FInt GetFBoundingRadius() { return FboundingRadius; }
 }

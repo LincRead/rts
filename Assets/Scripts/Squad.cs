@@ -37,7 +37,7 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(20);
+        InitUnits(5);
     }
 
     void InitUnits(int num)
@@ -78,7 +78,12 @@ public class Squad : Boid, LockStep {
 
     bool SetNewTarget()
     {
-        Fpos = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition))._FworldPosition;
+        Node newTargetNode = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+
+        if (newTargetNode == null)
+            return false;
+
+        Fpos = newTargetNode._FworldPosition;
 
         FindNewLeader();
 

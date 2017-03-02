@@ -39,8 +39,10 @@ public class Unit : Boid, LockStep
     int ticksBetweenAttacks = 20;
     int ticksSinceLastAttack = 0;
     
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         animator = GetComponent<Animator>();
 
         health = GetComponent<Health>();

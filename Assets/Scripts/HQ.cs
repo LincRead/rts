@@ -11,6 +11,8 @@ public class HQ : FActor {
 
     public override void LockStepUpdate()
     {
+        base.LockStepUpdate();
+
         ticksSinceSpawn++;
         if (ticksSinceSpawn == ticksBetweenSpawn)
         {
