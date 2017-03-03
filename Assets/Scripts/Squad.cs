@@ -68,6 +68,9 @@ public class Squad : Boid, LockStep {
 
     void UpdateSquadDirection()
     {
+        if (units.Count < 1)
+            return;
+
         FAverageUnitFVelocity = FPoint.Create();
         for (int i = 0; i < units.Count; i++)
         {
