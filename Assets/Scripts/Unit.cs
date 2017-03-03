@@ -190,11 +190,7 @@ public class Unit : Boid, LockStep
 
     void HandleIdling()
     {
-        Fvelocity = FidleVelocity;
-
-        // Steer away from friendly units
-        FPoint seperation = ComputeSeperation(friendlyActorsClose);
-        AddSteeringForce(seperation, FInt.FromParts(1, 0));
+        Fvelocity = FidleVelocity
     }
 
     void HandleChasingUnit()
@@ -476,13 +472,6 @@ public class Unit : Boid, LockStep
 
         // Damage target enemy
         unitScript.Damage(parentSquad.unitAttackDamage);
-
-        // Reset state
-        if (unitScript.IsDead())
-        {
-            targetEnemy = null;
-            MoveToTarget();
-        }
     }
 
     void Damage(int damageValue)
