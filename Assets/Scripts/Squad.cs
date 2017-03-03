@@ -37,7 +37,7 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(5);
+        InitUnits(30);
     }
 
     void InitUnits(int num)
@@ -57,7 +57,7 @@ public class Squad : Boid, LockStep {
 
         // Todo: put all commands in a chunk within a tick to send over network
         if (playerID == 0 && Input.GetMouseButtonDown(0))
-            if (!SetNewTarget())
+            if (!SetNewMoveToTarget())
                 return;
 
         FindNewLeader();
@@ -76,7 +76,7 @@ public class Squad : Boid, LockStep {
         }
     }
 
-    bool SetNewTarget()
+    bool SetNewMoveToTarget()
     {
         Node newTargetNode = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
 

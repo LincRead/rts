@@ -191,6 +191,10 @@ public class Unit : Boid, LockStep
     void HandleIdling()
     {
         Fvelocity = FidleVelocity;
+
+        // Steer away from friendly units
+        FPoint seperation = ComputeSeperation(friendlyActorsClose);
+        AddSteeringForce(seperation, FInt.FromParts(1, 0));
     }
 
     void HandleChasingUnit()
@@ -428,6 +432,9 @@ public class Unit : Boid, LockStep
         FInt shortestDistance = FInt.Create(1000);
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
+            if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
+                continue;
+
             FInt dist = FindDistanceToUnit(enemyActorsClose[i]);
             if (dist < FInt.Create(3) && dist < shortestDistance)
             {
