@@ -259,12 +259,12 @@ public class Unit : Boid, LockStep
     {
         if (currentState == UNIT_STATES.MOVE)
         {
-            if (parentSquad.faceDir == -1)
+            if (parentSquad.faceDir == 1)
             {
                 transform.localScale = new Vector3(-.6f, .6f, 1f);
             }
 
-            else if (parentSquad.faceDir == 1)
+            else if (parentSquad.faceDir == -1)
             {
                 transform.localScale = new Vector3(.6f, .6f, 1.0f);
             }

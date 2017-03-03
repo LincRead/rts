@@ -10,7 +10,8 @@ public class Squad : Boid, LockStep {
     [HideInInspector]
     public int faceDir = 1;
 
-    FPoint lastFPos;
+    FPoint FPosLast;
+    FPoint FAverageUnitFVelocity;
 
     public enum SQUAD_STATES
     {
@@ -53,7 +54,7 @@ public class Squad : Boid, LockStep {
 
     void Update ()
     {
-        lastFPos = Fpos;
+        FPosLast = Fpos;
 
         // Todo: put all commands in a chunk within a tick to send over network
         if (playerID == 0 && Input.GetMouseButtonDown(0))
@@ -67,13 +68,20 @@ public class Squad : Boid, LockStep {
 
     void UpdateSquadDirection()
     {
-        if (leader != null)
+        FAverageUnitFVelocity = FPoint.Create();
+        for (int i = 0; i < units.Count; i++)
         {
-            if (leader.GetFPosition().X < Fpos.X)
-                faceDir = -1;
-            else if (leader.GetFPosition().X > Fpos.X)
-                faceDir = 1;
+            FAverageUnitFVelocity.X += units[i].GetFVelocity().X;
+            FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y;
         }
+
+        FAverageUnitFVelocity.X = FAverageUnitFVelocity.X / units.Count;
+        FAverageUnitFVelocity.Y = FAverageUnitFVelocity.Y / units.Count;
+
+        if (FAverageUnitFVelocity.X > FInt.FromParts(0, 50))
+            faceDir = 1;
+        if (FAverageUnitFVelocity.X < FInt.FromParts(0, 50) * -1)
+            faceDir = -1;
     }
 
     bool SetNewMoveToTarget()
@@ -101,7 +109,7 @@ public class Squad : Boid, LockStep {
         else
         {
             // Don't change target pos for units
-            Fpos = lastFPos;
+            Fpos = FPosLast;
 
             // Failed to set new target
             return false;
