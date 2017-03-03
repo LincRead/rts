@@ -77,9 +77,14 @@ public class Unit : Boid, LockStep
     void DebugStateWithColor()
     {
         if (IsDead())
-            spriteRenderer.color = Color.magenta;
+            spriteRenderer.color = Color.black;
         else if (isLeader)
-            spriteRenderer.color = Color.red;
+        {
+            if (playerID == 0)
+                spriteRenderer.color = Color.red;
+            else
+                spriteRenderer.color = Color.magenta;
+        }
         else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
             spriteRenderer.color = Color.green;
         else if (playerID == 1)
