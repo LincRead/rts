@@ -190,7 +190,7 @@ public class Unit : Boid, LockStep
 
     void HandleIdling()
     {
-        Fvelocity = FidleVelocity
+        Fvelocity = FidleVelocity;
     }
 
     void HandleChasingUnit()
