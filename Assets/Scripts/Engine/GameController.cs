@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.Networking;
-using UnityEngine.Networking.NetworkSystem;
+using System.Collections.Generic;
 
-public class GameController : NetworkBehaviour {
 
+public class GameController : MonoBehaviour
+{
     int currentCommunicationTurn = 0;
     float timeBetweenCommunicationTurns = 1f;
     float timeSinceCommunicationTurn = 0.0f;
@@ -17,15 +17,17 @@ public class GameController : NetworkBehaviour {
     List<Turn> turns = new List<Turn>();
 
     [HideInInspector]
-    public int playerID = -1;
+    public int playerID = 0;
 
     int numPlayers = 2;
-    bool[] playersReady = new bool[2];
 
-    NetworkClient myClient;
+    [HideInInspector]
+    public bool[] playersReady = new bool[2];
 
     [HideInInspector]
     public bool gameReady = false;
+
+    private bool multiplayer = true;
 
     void Start()
     {
@@ -35,65 +37,18 @@ public class GameController : NetworkBehaviour {
         {
             playersReady[i] = false;
         }
+
+        playerID = 0;
     }
 
-    public void Init()
+    void Update()
     {
-        myClient = new NetworkClient();
-        myClient.RegisterHandler(MsgType.Connect, OnConnected);
-        myClient.RegisterHandler(MyMsgType.testMsg, OnPlayerRegistered);
-        myClient.RegisterHandler(MyMsgType.commandMsg, OnCommand);
-        myClient.Connect("127.0.0.1", 7777);
-    }
-
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        Init();
-    }
-
-    public void OnConnected(NetworkMessage netMsg)
-    {
-        var msg = new IntegerMessage(0);
-        myClient.Send(MyMsgType.msg, msg);
-    }
-
-    public void OnPlayerRegistered(NetworkMessage netMsg)
-    {
-        var message = netMsg.ReadMessage<IntegerMessage>();
-        playerID = message.value;
-        CmdSetPlayerAsReady();
-    }
-
-    public void OnCommand(NetworkMessage netMsg)
-    {
-        Command cmd = netMsg.ReadMessage<Command>();
-        Debug.Log(playerID + ": received turn " + cmd.turn + " from " + cmd.pid);
-        ReceiveCommand(cmd);
-    }
-
-    [Command]
-    void CmdSetPlayerAsReady()
-    {
-        if (isLocalPlayer)
-            return;
-
-        RpcRegisterPlayerAsReady(playerID);
-    }
-
-    [ClientRpc]
-    void RpcRegisterPlayerAsReady(int playerID)
-    {
-        if (isLocalPlayer)
-            return;
-
-        playersReady[playerID] = true;
-        Debug.Log("Player " + playerID + " is ready");
+ 
     }
 
     void FixedUpdate()
     {
-        if (!gameReady)
+        if (!gameReady && multiplayer)
         {
             if(playersReady[0] == true && playersReady[1] == true)
                 gameReady = true;
@@ -107,7 +62,8 @@ public class GameController : NetworkBehaviour {
         if (timeSinceCommunicationTurn >= timeBetweenCommunicationTurns)
             RunCommunicationTurn();
 
-        if (timeSinceLastGameplayTick >= timeBetweenGameplayTicks && currentCommunicationTurnReceived)
+        if (timeSinceLastGameplayTick >= timeBetweenGameplayTicks 
+            && (currentCommunicationTurnReceived || !multiplayer))
             RunGameplayTick();
     }
 
@@ -121,7 +77,13 @@ public class GameController : NetworkBehaviour {
     {
         if (timeSinceCommunicationTurn >= timeBetweenCommunicationTurns)
         {
-            if(ReceivedMessageFromAllPlayersForCurrentTurn() || currentCommunicationTurn < 2)
+            if(!multiplayer)
+            {
+                gameReady = true;
+                timeSinceCommunicationTurn = 0.0f;
+            }
+
+            else if(ReceivedMessageFromAllPlayersForCurrentTurn() || currentCommunicationTurn < 2)
             {
                 gameReady = true;
 
@@ -223,17 +185,10 @@ public class GameController : NetworkBehaviour {
         currentCommunicationTurnCommand.pid = 0; // Todo - relect actual current player ID
         currentCommunicationTurnCommand.turn = currentCommunicationTurn + 2; // Execute two turns in the future
 
-        // Send to self for now
-        // ReceiveCommand(currentCommunicationTurnCommand);
         Debug.Log(playerID + ": sending turn " + currentCommunicationTurnCommand.turn);
 
-        NetworkServer.SendToAll(MyMsgType.commandMsg, currentCommunicationTurnCommand);
+        //NetworkServer.SendToAll(MyMsgType.commandMsg, currentCommunicationTurnCommand);
     }
-
-    public class MyMessage
-    {
-        public static short Msg = MsgType.Highest + 1;
-    };
 }
 
 public class Command : MessageBase
@@ -249,4 +204,9 @@ public class Turn
 {
     public int turn;
     public Command[] command;
+}
+
+public class Message : MessageBase
+{
+    public int id;
 }

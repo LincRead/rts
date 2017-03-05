@@ -65,7 +65,7 @@ public class Squad : Boid, LockStep {
         FPosLast = Fpos;
 
         // Todo: put all commands in a chunk within a tick to send over network
-        if (playerID == gameController.playerID && Input.GetMouseButtonDown(0))
+        if (/*playerID == gameController.playerID &&*/ Input.GetMouseButtonDown(0))
             if (!SetNewMoveToTarget())
                 return;
 
