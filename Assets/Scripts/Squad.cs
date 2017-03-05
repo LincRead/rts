@@ -34,6 +34,14 @@ public class Squad : Boid, LockStep {
     FInt closetDistUnitToTarget;
     FInt minDistClosestUnitToTarget = FInt.FromParts(0, 320);
 
+    GameController gameController;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
+    }
+
     protected override void Start()
     {
         base.Start();
@@ -57,7 +65,7 @@ public class Squad : Boid, LockStep {
         FPosLast = Fpos;
 
         // Todo: put all commands in a chunk within a tick to send over network
-        if (playerID == 0 && Input.GetMouseButtonDown(0))
+        if (playerID == gameController.playerID && Input.GetMouseButtonDown(0))
             if (!SetNewMoveToTarget())
                 return;
 

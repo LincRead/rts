@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Networking;
+using UnityEngine.Networking.NetworkSystem;
 
-public class GameController : MonoBehaviour {
+public class GameController : NetworkBehaviour {
 
     int currentCommunicationTurn = 0;
     float timeBetweenCommunicationTurns = 1f;
@@ -14,10 +16,53 @@ public class GameController : MonoBehaviour {
 
     List<Turn> turns = new List<Turn>();
 
-    int numPlayers = 1;
+    [HideInInspector]
+    public int playerID = -1;
 
-    void Start () {
+    int numPlayers = 2;
+
+    NetworkClient myClient;
+
+    [HideInInspector]
+    public bool gameReady = false;
+
+    void Start()
+    {
         currentCommunicationTurnCommand = new Command();
+    }
+
+    public void Init()
+    {
+        myClient = new NetworkClient();
+        myClient.RegisterHandler(MsgType.Connect, OnConnected);
+        myClient.RegisterHandler(MyMsgType.Msg, OnPlayerRegistered);
+        myClient.RegisterHandler(MyMsgType.commandMessage, OnCommand);
+        myClient.Connect("127.0.0.1", 7777);
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        Init();
+    }
+
+    public void OnConnected(NetworkMessage netMsg)
+    {
+        var msg = new IntegerMessage(0);
+        myClient.Send(MyMsgType.msgID, msg);
+    }
+
+    public void OnPlayerRegistered(NetworkMessage netMsg)
+    {
+        var message = netMsg.ReadMessage<IntegerMessage>();
+        Debug.Log("Received Player ID:  " + message.value);
+    }
+
+    public void OnCommand(NetworkMessage netMsg)
+    {
+        Command cmd = netMsg.ReadMessage<Command>();
+        Debug.Log("Received command: " + cmd.turn);
+        ReceiveCommand(cmd);
     }
 
     void FixedUpdate()
@@ -44,6 +89,8 @@ public class GameController : MonoBehaviour {
         {
             if(ReceivedMessageFromAllPlayersForCurrentTurn() || currentCommunicationTurn < 2)
             {
+                gameReady = true;
+
                 // Execute commands from all Players
 
 
@@ -143,16 +190,22 @@ public class GameController : MonoBehaviour {
         currentCommunicationTurnCommand.turn = currentCommunicationTurn + 2; // Execute two turns in the future
 
         // Send to self for now
-        ReceiveCommand(currentCommunicationTurnCommand);
+        // ReceiveCommand(currentCommunicationTurnCommand);
 
+        NetworkServer.SendToAll(MyMsgType.commandMessage, currentCommunicationTurnCommand);
     }
+
+    public class MyMessage
+    {
+        public static short Msg = MsgType.Highest + 1;
+    };
 }
 
-public class Command
+public class Command : MessageBase
 {
-    public int turn = -1;
+    public int turn;
     public int pid; // player id
-    public int cid; // command id
+    public int cid = -1; // command id
     public int x; // optional
     public int y; // optional
 }
