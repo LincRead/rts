@@ -55,13 +55,12 @@ public class GameController : NetworkBehaviour {
     public void OnPlayerRegistered(NetworkMessage netMsg)
     {
         var message = netMsg.ReadMessage<IntegerMessage>();
-        Debug.Log("Received Player ID:  " + message.value);
     }
 
     public void OnCommand(NetworkMessage netMsg)
     {
         Command cmd = netMsg.ReadMessage<Command>();
-        Debug.Log("Received command: " + cmd.turn);
+        Debug.Log("Received turn: " + cmd.turn + " from " + cmd.pid);
         ReceiveCommand(cmd);
     }
 
@@ -191,6 +190,7 @@ public class GameController : NetworkBehaviour {
 
         // Send to self for now
         // ReceiveCommand(currentCommunicationTurnCommand);
+        Debug.Log(playerID + ": sending turn " + currentCommunicationTurnCommand.turn);
 
         NetworkServer.SendToAll(MyMsgType.commandMessage, currentCommunicationTurnCommand);
     }
