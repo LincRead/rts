@@ -20,6 +20,7 @@ public class GameController : NetworkBehaviour {
     public int playerID = -1;
 
     int numPlayers = 2;
+    bool[] playersReady = new bool[2];
 
     NetworkClient myClient;
 
@@ -29,14 +30,19 @@ public class GameController : NetworkBehaviour {
     void Start()
     {
         currentCommunicationTurnCommand = new Command();
+
+        for(int i = 0; i < numPlayers; i++)
+        {
+            playersReady[i] = false;
+        }
     }
 
     public void Init()
     {
         myClient = new NetworkClient();
         myClient.RegisterHandler(MsgType.Connect, OnConnected);
-        myClient.RegisterHandler(MyMsgType.Msg, OnPlayerRegistered);
-        myClient.RegisterHandler(MyMsgType.commandMessage, OnCommand);
+        myClient.RegisterHandler(MyMsgType.testMsg, OnPlayerRegistered);
+        myClient.RegisterHandler(MyMsgType.commandMsg, OnCommand);
         myClient.Connect("127.0.0.1", 7777);
     }
 
@@ -49,23 +55,52 @@ public class GameController : NetworkBehaviour {
     public void OnConnected(NetworkMessage netMsg)
     {
         var msg = new IntegerMessage(0);
-        myClient.Send(MyMsgType.msgID, msg);
+        myClient.Send(MyMsgType.msg, msg);
     }
 
     public void OnPlayerRegistered(NetworkMessage netMsg)
     {
         var message = netMsg.ReadMessage<IntegerMessage>();
+        playerID = message.value;
+        CmdSetPlayerAsReady();
     }
 
     public void OnCommand(NetworkMessage netMsg)
     {
         Command cmd = netMsg.ReadMessage<Command>();
-        Debug.Log("Received turn: " + cmd.turn + " from " + cmd.pid);
+        Debug.Log(playerID + ": received turn " + cmd.turn + " from " + cmd.pid);
         ReceiveCommand(cmd);
+    }
+
+    [Command]
+    void CmdSetPlayerAsReady()
+    {
+        if (isLocalPlayer)
+            return;
+
+        RpcRegisterPlayerAsReady(playerID);
+    }
+
+    [ClientRpc]
+    void RpcRegisterPlayerAsReady(int playerID)
+    {
+        if (isLocalPlayer)
+            return;
+
+        playersReady[playerID] = true;
+        Debug.Log("Player " + playerID + " is ready");
     }
 
     void FixedUpdate()
     {
+        if (!gameReady)
+        {
+            if(playersReady[0] == true && playersReady[1] == true)
+                gameReady = true;
+            else
+                return;
+        }
+
         timeSinceLastGameplayTick += Time.deltaTime;
         timeSinceCommunicationTurn += Time.deltaTime;
 
@@ -192,7 +227,7 @@ public class GameController : NetworkBehaviour {
         // ReceiveCommand(currentCommunicationTurnCommand);
         Debug.Log(playerID + ": sending turn " + currentCommunicationTurnCommand.turn);
 
-        NetworkServer.SendToAll(MyMsgType.commandMessage, currentCommunicationTurnCommand);
+        NetworkServer.SendToAll(MyMsgType.commandMsg, currentCommunicationTurnCommand);
     }
 
     public class MyMessage
