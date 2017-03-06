@@ -48,6 +48,7 @@ public class Unit : Boid, LockStep
         animator = GetComponent<Animator>();
 
         health = GetComponent<Health>();
+        health
         if (health == null) Debug.LogError("Unit always needs a Health script attached");
     } 
 
