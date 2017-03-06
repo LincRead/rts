@@ -4,23 +4,28 @@ using System.Collections;
 public class Health : MonoBehaviour {
 
     public GameObject healthBarPrefab;
+    public float regeneratePerSecond = 2f;
     GameObject healthBarInstance;
     SpriteRenderer spriteRenderer;
-    int maxHitpoints = 0;
-    int hitpoints = 0;
+    FInt maxHitpoints = FInt.Create(0);
+    FInt hitpoints = FInt.Create(0);
+    FInt zeroHitpoints = FInt.Create(0);
+    FInt FregeneratePerTick;
 
     void Start () {
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
         new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         spriteRenderer = healthBarInstance.GetComponent<SpriteRenderer>();
+        Debug.Log((regeneratePerSecond / 20));
+        FregeneratePerTick = FInt.FromFloat((regeneratePerSecond / 20));
     }
 
     void Update()
     {
         if(maxHitpoints != 0)
         {
-            float scaleX = ((float)hitpoints / (float)maxHitpoints);
+            float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
             healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.5f, 3.0f, 0.0f);
 
             if (scaleX <= 0.4f)
@@ -31,7 +36,7 @@ public class Health : MonoBehaviour {
                 spriteRenderer.color = Color.yellow;
             else
                 spriteRenderer.color = Color.green;
-        } 
+        }
 
         else
         {
@@ -39,17 +44,38 @@ public class Health : MonoBehaviour {
         }
     }
 
+    public void Regenerate()
+    {
+        if (hitpoints == zeroHitpoints)
+            return;
+
+        hitpoints += FregeneratePerTick;
+
+        if (hitpoints > maxHitpoints)
+            hitpoints = maxHitpoints;
+    }
+
     public void ChangeHitpoints(int value)
     {
         hitpoints += value;
 
-        if (hitpoints < 0)
-            hitpoints = 0;
+        if (hitpoints < zeroHitpoints)
+            hitpoints = zeroHitpoints;
     }
 
-    public void SetMaxHitpoints(int maxHP) {  maxHitpoints = maxHP; }
-    public void SetHitpoints(int HP) { hitpoints = HP; }
+    public void SetMaxHitpoints(int maxHP) {
+        maxHitpoints = FInt.Create(maxHP);
+    }
 
-    public int GetHitpoints() { return hitpoints; }
-    public bool IsHitpointsZero() { return hitpoints == 0; }
+    public void SetHitpoints(int HP) {
+        hitpoints = FInt.Create(HP);
+    }
+
+    public FInt GetHitpoints() {
+        return hitpoints;
+    }
+
+    public bool IsHitpointsZero() {
+        return hitpoints == zeroHitpoints;
+    }
 }

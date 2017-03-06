@@ -48,7 +48,6 @@ public class Unit : Boid, LockStep
         animator = GetComponent<Animator>();
 
         health = GetComponent<Health>();
-        health
         if (health == null) Debug.LogError("Unit always needs a Health script attached");
     } 
 
@@ -116,6 +115,10 @@ public class Unit : Boid, LockStep
     public override void LockStepUpdate()
     {
         base.LockStepUpdate();
+
+        // Update health
+        if(currentState != UNIT_STATES.ATTACKING)
+            health.Regenerate();
 
         // Reset interpolation
         currentLerpTime = 0.0f;
@@ -200,6 +203,9 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
+        FPoint seek = ComputeSeek(targetEnemy, false);
+        AddSteeringForce(seek, FInt.FromParts(1, 0));
+
         // Steer away from friendly units
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
         AddSteeringForce(seperation, FInt.FromParts(1, 0));
@@ -209,9 +215,6 @@ public class Unit : Boid, LockStep
         AddSteeringForce(avoidance, FInt.FromParts(0, 300));
 
         // Steer towards enemy target
-
-        FPoint seek = ComputeSeek(targetEnemy, false);
-        AddSteeringForce(seek, FInt.FromParts(0, 300));
     }
 
     void HandleAttacking()

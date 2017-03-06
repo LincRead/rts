@@ -23,8 +23,8 @@ public class Squad : Boid, LockStep {
     public SQUAD_STATES state = SQUAD_STATES.IDLE;
 
     [Header("Units")]
-    public int unitMaxHitpoints = 10;
-    public int unitAttackDamage = 1;
+    public int unitMaxHitpoints = 100;
+    public int unitAttackDamage = 10;
     public FInt unitMoveSpeed = FInt.FromParts(0, 400);
     public FInt unitHealthRegenerateSpeed = FInt.FromParts(0, 50);
     List<Unit> units = new List<Unit>(30);
