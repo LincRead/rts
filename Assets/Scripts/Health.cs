@@ -17,7 +17,6 @@ public class Health : MonoBehaviour {
         new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         spriteRenderer = healthBarInstance.GetComponent<SpriteRenderer>();
-        Debug.Log((regeneratePerSecond / 20));
         FregeneratePerTick = FInt.FromFloat((regeneratePerSecond / 20));
     }
 
