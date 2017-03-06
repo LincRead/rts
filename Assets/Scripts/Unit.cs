@@ -30,6 +30,9 @@ public class Unit : Boid, LockStep
     FPoint FidleVelocity = FPoint.Create();
     FInt maxSeeAhead = FInt.FromParts(1, 0);
 
+    // Designed FVelocity to get to target, without seperation, obstacle avoidance etc.
+    FPoint FdirectionVelocity = FPoint.Create(); 
+
     bool canFindNewTarget = true;
 
     List<FActor> friendlyActorsClose = new List<FActor>(30);
@@ -203,6 +206,7 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
+        // Steer towards enemy target
         FPoint seek = ComputeSeek(targetEnemy, false);
         AddSteeringForce(seek, FInt.FromParts(1, 0));
 
@@ -214,7 +218,8 @@ public class Unit : Boid, LockStep
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
         AddSteeringForce(avoidance, FInt.FromParts(0, 300));
 
-        // Steer towards enemy target
+        // Desired velocity
+        FdirectionVelocity = seek;
     }
 
     void HandleAttacking()
@@ -239,17 +244,22 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
+        FPoint seek = FidleVelocity;
+
         if (isLeader)
         {
-            FPoint seek = ComputeSeek(parentSquad, true);
+            seek = ComputeSeek(parentSquad, true);
             AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
         else if (parentSquad.leader != null)
         {
-            FPoint seek = ComputeSeek(parentSquad.leader, true);
+            seek = ComputeSeek(parentSquad.leader, true);
             AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
+
+        // Desired velocity
+        FdirectionVelocity = seek;
 
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
         AddSteeringForce(seperation, FInt.FromParts(0, 600));
@@ -480,7 +490,7 @@ public class Unit : Boid, LockStep
         // Don't chase or attack anyone unless true
         if (canFindNewTarget)
         {
-            FPoint FAttackPoint = FPoint.VectorAdd(GetFPosition(), Fvelocity);
+            FPoint FAttackPoint = FPoint.VectorAdd(GetFPosition(), FdirectionVelocity);
             if (LineIntersectsObstacle(FAttackPoint, targetEnemy))
             {
                 // Reset timer before first blow
