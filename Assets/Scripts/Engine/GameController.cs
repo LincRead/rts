@@ -11,7 +11,7 @@ public class GameController : MonoBehaviour
     float timeSinceCommunicationTurn = 0.0f;
     float timeBetweenGameplayTicks = .05f;
     float timeSinceLastGameplayTick = 0.0f;
-    Command currentCommunicationTurnCommand = null;
+    MessageCommand currentCommunicationTurnCommand = null;
     bool currentCommunicationTurnReceived = true;
 
     List<Turn> turns = new List<Turn>();
@@ -31,7 +31,7 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        currentCommunicationTurnCommand = new Command();
+        currentCommunicationTurnCommand = new MessageCommand();
 
         for(int i = 0; i < numPlayers; i++)
         {
@@ -147,7 +147,7 @@ public class GameController : MonoBehaviour
             obstacles[i].GetComponent<FActor>().LockStepUpdate();
     }
 
-    public void ReceiveCommand(Command command)
+    public void ReceiveCommand(MessageCommand command)
     {
         bool createTurn = true;
         for(int i = 0; i < turns.Count; i++)
@@ -163,7 +163,7 @@ public class GameController : MonoBehaviour
         {
             Turn turn = new Turn();
             turn.turn = command.turn;
-            turn.command = new Command[numPlayers];
+            turn.command = new MessageCommand[numPlayers];
             turn.command[command.pid] = command;
             turns.Add(turn);
         }
@@ -191,22 +191,9 @@ public class GameController : MonoBehaviour
     }
 }
 
-public class Command : MessageBase
-{
-    public int turn;
-    public int pid; // player id
-    public int cid = -1; // command id
-    public int x; // optional
-    public int y; // optional
-}
-
 public class Turn
 {
     public int turn;
-    public Command[] command;
+    public MessageCommand[] command;
 }
 
-public class Message : MessageBase
-{
-    public int id;
-}

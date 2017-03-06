@@ -5,13 +5,6 @@ using UnityEngine.Networking.NetworkSystem;
 
 public class Client : NetworkBehaviour
 {
-    public static class MsgTypes
-    {
-        public static short testMsg = 1000;
-        public static short message = 1003;
-        public static short commandMsg = 1004;
-    };
-
     GameController gameController;
     NetworkClient myClient;
 
@@ -23,16 +16,17 @@ public class Client : NetworkBehaviour
     public override void OnStartClient()
     {
         NetworkServer.RegisterHandler(MsgType.Connect, OnConnected);
-        NetworkServer.RegisterHandler(MsgTypes.commandMsg, OnCommand);
+        NetworkServer.RegisterHandler(MsgTypes.MessageCommand, OnCommand);
+        NetworkServer.RegisterHandler(MsgTypes.MessagePlayerID, OnPlayerID);
     }
 
     public void OnConnected(NetworkMessage netMsg)
     {
         Debug.Log("CONNECTED");
-        Message msg = new Message();
+        /*Message msg = new Message();
         msg.id = 0;
         myClient = NetworkClient.allClients[0];
-        myClient.Send(MsgTypes.message, msg);
+        myClient.Send(MsgTypes.message, msg);*/
         //Connect();
         /*var msg = netMsg.ReadMessage<IntegerMessage>();
         gameController.playerID = msg.value;
@@ -40,9 +34,16 @@ public class Client : NetworkBehaviour
         CmdSetPlayerAsReady();*/
     }
 
-    public void OnCommand(NetworkMessage netMsg)
+    public void OnPlayerID(NetworkMessage networkMessage)
     {
-        Command cmd = netMsg.ReadMessage<Command>();
+        MessagePlayerID msg = networkMessage.ReadMessage<MessagePlayerID>();
+        gameController.playerID = msg.pid;
+        Debug.Log("Set pid to " + gameController.playerID);
+    }
+
+    public void OnCommand(NetworkMessage networkMessage)
+    {
+        MessageCommand cmd = networkMessage.ReadMessage<MessageCommand>();
         Debug.Log(gameController.playerID + ": received turn " + cmd.turn + " from " + cmd.pid);
         gameController.ReceiveCommand(cmd);
     }
