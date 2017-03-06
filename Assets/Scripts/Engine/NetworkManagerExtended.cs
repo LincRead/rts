@@ -12,6 +12,9 @@ public class NetworkManagerExtended : MonoBehaviour
     void Start()
     {
         gameController = GetComponent<GameController>();
+
+        if (!gameController.IsMultiplayer())
+            isAtStartup = false;
     }
 
     void Update()

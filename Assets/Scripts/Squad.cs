@@ -39,6 +39,7 @@ public class Squad : Boid, LockStep {
     protected override void Awake()
     {
         base.Awake();
+
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
     }
 
@@ -65,23 +66,35 @@ public class Squad : Boid, LockStep {
         if (!gameController.gameReady)
             return;
 
-        // Store in case we want to revert by the end of loop
-        FPosLast = Fpos;
-
         if (playerID == gameController.playerID && Input.GetMouseButtonDown(0))
         {
+            // Store so we can revert by end of loop
+            FPosLast = Fpos;
+
             Node node = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
             Fpos = node._FworldPosition;
             CalculateClosestUnitToNode();
+
             if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
             {
                 if (gameController.IsMultiplayer())
-                    gameController.SetCommand(0, node.gridPosX, node.gridPosY);
+                {
+                    gameController.SetNextCommand(0, node.gridPosX, node.gridPosY);
+
+                    // Don't change before Server serves the command
+                    Fpos = FPosLast;
+                }
+                    
                 else
+                {
                     MoveToTarget(node.gridPosX, node.gridPosY);
+                }
             }
 
-            Fpos = FPosLast;
+            else
+            {
+                Fpos = FPosLast;
+            }
         }
 
         UpdateSquadDirection();
