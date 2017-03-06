@@ -47,14 +47,14 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(30);
+        InitUnits(5);
     }
 
     void InitUnits(int num)
     {
         for (var i = 0; i < num; i++)
         {
-            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.5f, transform.position.y + (i % 3) * 0.5f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.2f, transform.position.y + (i % 2) * 0.3f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             AddUnit(newUnit.GetComponent<Unit>());
@@ -121,9 +121,9 @@ public class Squad : Boid, LockStep {
         FAverageUnitFVelocity.X = FAverageUnitFVelocity.X / units.Count;
         FAverageUnitFVelocity.Y = FAverageUnitFVelocity.Y / units.Count;
 
-        if (FAverageUnitFVelocity.X > FInt.FromParts(0, 50))
+        if (FAverageUnitFVelocity.X > FInt.FromParts(0, 100))
             faceDir = 1;
-        if (FAverageUnitFVelocity.X < FInt.FromParts(0, 50) * -1)
+        if (FAverageUnitFVelocity.X < FInt.FromParts(0, 100) * -1)
             faceDir = -1;
     }
 
@@ -163,7 +163,10 @@ public class Squad : Boid, LockStep {
             if (dist < closetDistUnitToTarget)
             {
                 closetDistUnitToTarget = dist;
-                closestUnit = units[i];
+
+                // Don't pick units who are not yet merged with squad as leader
+                if(!units[i].IsMergingWithSquad())
+                    closestUnit = units[i];
             }
         }
 
@@ -184,6 +187,7 @@ public class Squad : Boid, LockStep {
         Unit unitScript = newUnit.GetComponent<Unit>();
         unitScript.SetSquad(this);
         unitScript.playerID = playerID;
+        unitScript.CancelMergingWithSquad(); // Initial units are already merged with squad
     }
 
     public void RemoveUnit(Unit unitToRemove) { units.Remove(unitToRemove); }

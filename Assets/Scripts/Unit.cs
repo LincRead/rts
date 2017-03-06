@@ -14,7 +14,9 @@ public class Unit : Boid, LockStep
     }
 
     [Header("Debug state")]
-    public UNIT_STATES currentState = UNIT_STATES.MOVE;
+    public UNIT_STATES currentState = UNIT_STATES.IDLE;
+
+    private bool mergingWithSquad = true;
 
     [HideInInspector]
     public bool isLeader = false;
@@ -46,8 +48,7 @@ public class Unit : Boid, LockStep
         animator = GetComponent<Animator>();
 
         health = GetComponent<Health>();
-        if (health == null)
-            Debug.LogError("Unit always needs a Health script attached");
+        if (health == null) Debug.LogError("Unit always needs a Health script attached");
     } 
 
     protected override void Start()
@@ -139,6 +140,7 @@ public class Unit : Boid, LockStep
         HandleCurrentState();
         AvoidObstacles();  // ALWAYS avoid obstacles
         HandleAnimations();
+        HandleFaceDir();
         ExecuteMovement();
     }
 
@@ -257,16 +259,48 @@ public class Unit : Boid, LockStep
 
     void HandleAnimations()
     {
+        if (currentState == UNIT_STATES.IDLE)
+        {
+            animator.SetBool("moving", false);
+        }
+
+        else
+        {
+            animator.SetBool("moving", true);
+        }
+    }
+
+    void HandleFaceDir()
+    {
+        // Moving and merged with squad
+        // Or is leader
         if (currentState == UNIT_STATES.MOVE)
         {
-            if (parentSquad.faceDir == 1)
+            if (!mergingWithSquad || isLeader)
             {
-                transform.localScale = new Vector3(-.6f, .6f, 1f);
+                if (parentSquad.faceDir == 1)
+                {
+                    transform.localScale = new Vector3(-.6f, .6f, 1f);
+                }
+
+                else if (parentSquad.faceDir == -1)
+                {
+                    transform.localScale = new Vector3(.6f, .6f, 1f);
+                }
             }
 
-            else if (parentSquad.faceDir == -1)
+            // Moving to merge with squad
+            else if (parentSquad.leader != null)
             {
-                transform.localScale = new Vector3(.6f, .6f, 1.0f);
+                if (Fpos.X < parentSquad.leader.GetFPosition().X)
+                {
+                    transform.localScale = new Vector3(-.6f, .6f, 1f);
+                }
+
+                else if (Fpos.X > parentSquad.leader.GetFPosition().X)
+                {
+                    transform.localScale = new Vector3(.6f, .6f, 1f);
+                }
             }
         }
 
@@ -279,18 +313,13 @@ public class Unit : Boid, LockStep
 
             else if (Fpos.X > targetEnemy.GetFPosition().X)
             {
-                transform.localScale = new Vector3(.6f, .6f, 1.0f);
+                transform.localScale = new Vector3(.6f, .6f, 1f);
             }
         }
 
-        if (currentState == UNIT_STATES.IDLE)
+        else if (parentSquad.leader != null)
         {
-            animator.SetBool("moving", false);
-        }
-
-        else
-        {
-            animator.SetBool("moving", true);
+            transform.localScale = parentSquad.leader.GetComponent<Transform>().localScale;
         }
     }
 
@@ -336,6 +365,7 @@ public class Unit : Boid, LockStep
 
             if (leader && dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
+                mergingWithSquad = false;
                 currentState = UNIT_STATES.IDLE;
             }
         }
@@ -515,4 +545,8 @@ public class Unit : Boid, LockStep
     void CanFindNewTarget() { canFindNewTarget = true; }
 
     public bool IsDead() { return health.IsHitpointsZero(); }
+
+    public void CancelMergingWithSquad() { mergingWithSquad = false; }
+
+    public bool IsMergingWithSquad() {return mergingWithSquad;  }
 }
