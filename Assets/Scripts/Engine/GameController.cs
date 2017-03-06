@@ -38,7 +38,7 @@ public class GameController : MonoBehaviour
     public bool gameReady = false;
 
     private int numPlayers = 2;
-    private bool multiplayer = false;
+    private bool multiplayer = true;
 
     void Start()
     {
