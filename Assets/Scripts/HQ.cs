@@ -4,6 +4,7 @@ using System.Collections;
 public class HQ : FActor {
 
     [Header("HQ")]
+    public bool spawnUnits = true;
     public int ticksBetweenSpawn = 40;
     private int ticksSinceSpawn = 0;
 
@@ -12,6 +13,9 @@ public class HQ : FActor {
     public override void LockStepUpdate()
     {
         base.LockStepUpdate();
+
+        if (!spawnUnits)
+            return;
 
         ticksSinceSpawn++;
         if (ticksSinceSpawn == ticksBetweenSpawn)

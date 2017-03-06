@@ -26,6 +26,7 @@ public class Squad : Boid, LockStep {
     public int unitMaxHitpoints = 10;
     public int unitAttackDamage = 1;
     public FInt unitMoveSpeed = FInt.FromParts(0, 400);
+    public FInt unitHealthRegenerateSpeed = FInt.FromParts(0, 50);
     List<Unit> units = new List<Unit>(30);
 
     // Find closest target and set as leader of squad
@@ -47,7 +48,7 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(5);
+        InitUnits(1);
     }
 
     void InitUnits(int num)
@@ -58,6 +59,7 @@ public class Squad : Boid, LockStep {
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             AddUnit(newUnit.GetComponent<Unit>());
+            newUnit.GetComponent<Unit>().CancelMergingWithSquad(); // Initial units are already merged with squad
         }
     }
 
@@ -187,7 +189,6 @@ public class Squad : Boid, LockStep {
         Unit unitScript = newUnit.GetComponent<Unit>();
         unitScript.SetSquad(this);
         unitScript.playerID = playerID;
-        unitScript.CancelMergingWithSquad(); // Initial units are already merged with squad
     }
 
     public void RemoveUnit(Unit unitToRemove) { units.Remove(unitToRemove); }

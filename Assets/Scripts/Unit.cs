@@ -363,9 +363,8 @@ public class Unit : Boid, LockStep
             steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
             steer = FPoint.VectorMultiply(steer, (dist / desiredSlowArea));
 
-            if (leader && dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
+            if (dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
-                mergingWithSquad = false;
                 currentState = UNIT_STATES.IDLE;
             }
         }
@@ -396,7 +395,8 @@ public class Unit : Boid, LockStep
                 if(actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
                 {
                     currentState = UNIT_STATES.IDLE;
-                    Fvelocity = FPoint.Create();
+                    Fvelocity = FidleVelocity;
+                    mergingWithSquad = false;
                 }
 
                 FPoint diff = FPoint.VectorSubtract(Fpos, actors[i].GetFPosition());
@@ -527,6 +527,7 @@ public class Unit : Boid, LockStep
 
     FInt FindDistanceToUnit(FActor unit)
     {
+        if (unit == null) return FInt.Create(1000);
         return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
     }
 
