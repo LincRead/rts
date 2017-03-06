@@ -37,8 +37,10 @@ public class GameController : MonoBehaviour
     [HideInInspector]
     public bool gameReady = false;
 
+    private bool multiplayer = false;
+
+    // Todo: make dynamic based on players connected to game
     private int numPlayers = 2;
-    private bool multiplayer = true;
 
     void Start()
     {
@@ -211,11 +213,6 @@ public class GameController : MonoBehaviour
         commandToSend.cid = -1;
     }
 
-    public bool IsMultiplayer()
-    {
-        return multiplayer;
-    }
-
     Turn GetTurnOfNumber(int turn)
     {
         for (int i = 0; i < turns.Count; i++)
@@ -238,6 +235,11 @@ public class GameController : MonoBehaviour
         }
 
         return null;
+    }
+
+    public bool IsMultiplayer()
+    {
+        return multiplayer;
     }
 }
 
