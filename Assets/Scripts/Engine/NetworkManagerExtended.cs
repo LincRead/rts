@@ -11,7 +11,7 @@ public class NetworkManagerExtended : MonoBehaviour
 
     void Start()
     {
-        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
+        gameController = GetComponent<GameController>();
     }
 
     void Update()
@@ -46,6 +46,7 @@ public class NetworkManagerExtended : MonoBehaviour
         NetworkServer.Listen(4444);
         NetworkServer.RegisterHandler(MsgType.Connect, OnServerConnect);
         NetworkServer.RegisterHandler(MsgTypes.MessagePlayerReady, OnServerReceivePlayerReady);
+        NetworkServer.RegisterHandler(MsgTypes.MessageCommand, OnServerReceiveCommand);
         isAtStartup = false;
     }
 
@@ -68,9 +69,12 @@ public class NetworkManagerExtended : MonoBehaviour
     void AddClientHandlers()
     {
         myClient.RegisterHandler(MsgType.Connect, OnConnected);
-        myClient.RegisterHandler(MsgTypes.MessagePlayerID, OnPlayerID);
-        myClient.RegisterHandler(MsgTypes.MessagePlayerReady, OnPlayerReady);
+        myClient.RegisterHandler(MsgTypes.MessagePlayerID, OnClientReceivePlayerID);
+        myClient.RegisterHandler(MsgTypes.MessagePlayerReady, OnClientReceivePlayerReady);
+        myClient.RegisterHandler(MsgTypes.MessageCommand, OnClientReceiveCommand);
     }
+
+    // --- SERVER --- ///
 
     public void OnServerConnect(NetworkMessage networkMessage)
     {
@@ -97,29 +101,47 @@ public class NetworkManagerExtended : MonoBehaviour
         NetworkServer.SendToAll(MsgTypes.MessagePlayerReady, msg);
     }
 
-    // Client function
+    public void OnServerReceiveCommand(NetworkMessage networkMessage)
+    {
+        MessageCommand msg = networkMessage.ReadMessage<MessageCommand>();
+        NetworkServer.SendToAll(MsgTypes.MessageCommand, msg);
+    }
+
+    // --- CLIENT --- ///
+
     public void OnConnected(NetworkMessage netMsg)
     {
         Debug.Log("Connected to server");
     }
 
-    public void OnPlayerID(NetworkMessage networkMessage)
+    public void SendCommandFromClient(MessageCommand command)
+    {
+        myClient.Send(MsgTypes.MessageCommand, command);
+    }
+
+    public void OnClientReceivePlayerID(NetworkMessage networkMessage)
     {
         MessagePlayerID messageReceived = networkMessage.ReadMessage<MessagePlayerID>();
         gameController.playerID = messageReceived.pid;
 
-        Debug.Log("I am client " + gameController.playerID);
+        Debug.Log("Client set Player ID to " + gameController.playerID);
 
         MessagePlayerReady messageSend = new MessagePlayerReady();
         messageSend.pid = gameController.playerID;
         myClient.Send(MsgTypes.MessagePlayerReady, messageSend);
     }
 
-    public void OnPlayerReady(NetworkMessage networkMessage)
+    public void OnClientReceivePlayerReady(NetworkMessage networkMessage)
     {
         MessagePlayerReady msg = networkMessage.ReadMessage<MessagePlayerReady>();
         gameController.playersReady[msg.pid] = true;
         Debug.Log("Player " + msg.pid + " is Ready");
+    }
+
+    public void OnClientReceiveCommand(NetworkMessage networkMessage)
+    {
+        MessageCommand command = networkMessage.ReadMessage<MessageCommand>();
+        gameController.HandleReceivedCommand(command);
     }
 }
 

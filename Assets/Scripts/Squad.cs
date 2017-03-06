@@ -62,16 +62,35 @@ public class Squad : Boid, LockStep {
 
     void Update ()
     {
+        if (!gameController.gameReady)
+            return;
+
+        // Store in case we want to revert by the end of loop
         FPosLast = Fpos;
 
-        // Todo: put all commands in a chunk within a tick to send over network
-        if (/*playerID == gameController.playerID &&*/ Input.GetMouseButtonDown(0))
-            if (!SetNewMoveToTarget())
-                return;
+        if (playerID == gameController.playerID && Input.GetMouseButtonDown(0))
+        {
+            Node node = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            Fpos = node._FworldPosition;
+            CalculateClosestUnitToNode();
+            if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
+            {
+                if (gameController.IsMultiplayer())
+                    gameController.SetCommand(0, node.gridPosX, node.gridPosY);
+                else
+                    MoveToTarget(node.gridPosX, node.gridPosY);
+            }
 
-        FindNewLeader();
+            Fpos = FPosLast;
+        }
+
         UpdateSquadDirection();
         transform.position = GetRealPosToVector3();
+    }
+
+    void MoveToTarget(int x, int y)
+    {
+        MoveToNode(x, y);
     }
 
     void UpdateSquadDirection()
@@ -95,46 +114,33 @@ public class Squad : Boid, LockStep {
             faceDir = -1;
     }
 
-    bool SetNewMoveToTarget()
+    public void MoveToNode(int x, int y)
     {
-        Node newTargetNode = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-
-        if (newTargetNode == null)
-            return false;
-
+        Node newTargetNode = pathFinding.GetNodeFromGridPos(x, y);
         Fpos = newTargetNode._FworldPosition;
+        state = SQUAD_STATES.MOVE_TO_TARGET;
 
-        FindNewLeader();
-
-        if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
-        {
-            state = SQUAD_STATES.MOVE_TO_TARGET;
-
-            for (int i = 0; i < units.Count; i++)
-                units[i].MoveToTarget();
-
-            // Success
-            return true;
-        }
-
-        else
-        {
-            // Don't change target pos for units
-            Fpos = FPosLast;
-
-            // Failed to set new target
-            return false;
-        }
+        for (int i = 0; i < units.Count; i++)
+            units[i].MoveToTarget();
     }
 
     public void FindNewLeader()
     {
-        Unit newLeader = null;
-
         // Tell old leader his or her leadership is over
         if (leader != null)
             leader.GetComponent<Unit>().isLeader = false;
 
+        // Set leader
+        leader = CalculateClosestUnitToNode();
+
+        // Let new leader know he is the leader
+        if(leader != null)
+            leader.isLeader = true;
+    }
+
+    Unit CalculateClosestUnitToNode()
+    {
+        Unit closestUnit = null;
         closetDistUnitToTarget = FInt.Create(1000);
 
         // Find unit closest to target
@@ -144,21 +150,18 @@ public class Squad : Boid, LockStep {
             if (dist < closetDistUnitToTarget)
             {
                 closetDistUnitToTarget = dist;
-                newLeader = units[i];
+                closestUnit = units[i];
             }
         }
 
-        // Set leader
-        leader = newLeader;
-
-        // Let new leader know he is the leader
-        if(leader != null)
-            leader.isLeader = true;
+        return closestUnit;
     }
 
     public override void LockStepUpdate()
     {
-        for(int i = 0; i < units.Count; i++)
+        FindNewLeader();
+
+        for (int i = 0; i < units.Count; i++)
             units[i].GetComponent<FActor>().LockStepUpdate();
     }
 

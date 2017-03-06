@@ -131,7 +131,7 @@ public class Grid : MonoBehaviour
 
     public Node GetNodeFromGridPos(int gridPosX, int gridPosY)
     {
-        if (gridPosX < 0 || gridPosX > gridSizeX - 1 || gridPosX < 0 || gridPosX > gridSizeY - 1)
+        if (gridPosX < 0 || gridPosX > gridSizeX - 1 || gridPosY < 0 || gridPosY > gridSizeY - 1)
         {
             Debug.LogError("Trying to get a Node outside grid boundaries");
             return null;

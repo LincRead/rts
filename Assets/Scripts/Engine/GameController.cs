@@ -6,15 +6,17 @@ using System.Collections.Generic;
 
 public class GameController : MonoBehaviour
 {
-    int currentCommunicationTurn = 0;
-    float timeBetweenCommunicationTurns = 1f;
+    int currentTurn = 0;
+    float timeBetweenCommunicationTurns = .5f;
     float timeSinceCommunicationTurn = 0.0f;
     float timeBetweenGameplayTicks = .05f;
     float timeSinceLastGameplayTick = 0.0f;
-    MessageCommand currentCommunicationTurnCommand = null;
-    bool currentCommunicationTurnReceived = true;
+    MessageCommand currentCommand = null;
+    bool currentTurnReceivedFromAllPlayers = true;
 
     List<Turn> turns = new List<Turn>();
+
+    NetworkManagerExtended networkManager;
 
     [HideInInspector]
     public int playerID = 0;
@@ -31,12 +33,15 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        currentCommunicationTurnCommand = new MessageCommand();
+        networkManager = GetComponent<NetworkManagerExtended>();
+        currentCommand = new MessageCommand();
 
         for(int i = 0; i < numPlayers; i++)
-        {
             playersReady[i] = false;
-        }
+
+        // Don't have to wait for other players
+        if (!multiplayer)
+            gameReady = true;
 
         playerID = 0;
     }
@@ -48,7 +53,7 @@ public class GameController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!gameReady && multiplayer)
+        if (!gameReady)
         {
             if(playersReady[0] == true && playersReady[1] == true)
                 gameReady = true;
@@ -63,7 +68,7 @@ public class GameController : MonoBehaviour
             RunCommunicationTurn();
 
         if (timeSinceLastGameplayTick >= timeBetweenGameplayTicks 
-            && (currentCommunicationTurnReceived || !multiplayer))
+            && (currentTurnReceivedFromAllPlayers || !multiplayer))
             RunGameplayTick();
     }
 
@@ -75,50 +80,75 @@ public class GameController : MonoBehaviour
 
     void RunCommunicationTurn()
     {
-        if (timeSinceCommunicationTurn >= timeBetweenCommunicationTurns)
+        if(!multiplayer)
         {
-            if(!multiplayer)
+            gameReady = true;
+            timeSinceCommunicationTurn = 0.0f;
+        }
+
+        else if(ReceivedCommandFromAllPlayersForCurrentTurn() || currentTurn < 2)
+        {
+            gameReady = true;
+
+            if (currentTurn > 1)
             {
-                gameReady = true;
-                timeSinceCommunicationTurn = 0.0f;
-            }
-
-            else if(ReceivedMessageFromAllPlayersForCurrentTurn() || currentCommunicationTurn < 2)
-            {
-                gameReady = true;
-
-                // Execute commands from all Players
-
+                // Execute command from all Players
+                ExecuteTurn(GetTurnOfNumber(currentTurn));
 
                 // Remove turn with commands
-                turns.Remove(GetTurnOfNumber(currentCommunicationTurn));
-
-                SendNextCommand();
-
-                // Reset for next turn
-                timeSinceCommunicationTurn = 0.0f;
-                currentCommunicationTurn++;
-                currentCommunicationTurnReceived = true;
+                turns.Remove(GetTurnOfNumber(currentTurn));
             }
 
-            else
-            {
-                currentCommunicationTurnReceived = false;
-            }
+            SendNextCommand();
+
+            currentTurnReceivedFromAllPlayers = true;
+
+            // Reset for next turn
+            timeSinceCommunicationTurn = 0.0f;
+            currentTurn++;
         }
-            
+
+        else
+        {
+            currentTurnReceivedFromAllPlayers = false;
+        }     
     }
 
-    bool ReceivedMessageFromAllPlayersForCurrentTurn()
+    void ExecuteTurn(Turn turn)
     {
-        Turn turn = GetTurnOfNumber(currentCommunicationTurn);
+        for(int i = 0; i < turn.commands.Length; i++)
+        {
+            ExecuteCommand(turn.commands[i]);
+        }
+    }
+
+    void ExecuteCommand(MessageCommand command)
+    {
+        if(command.cid != -1)
+            Debug.Log("Executed command " + command.cid + " in turn " + currentTurn);
+
+        switch (command.cid)
+        {
+            // Move squad to node
+            case 0:
+                FindSquadWithID(command.pid).MoveToNode(command.x, command.y);
+
+                break;
+
+            default: break;
+        }
+    }
+
+    bool ReceivedCommandFromAllPlayersForCurrentTurn()
+    {
+        Turn turn = GetTurnOfNumber(currentTurn);
 
         if (turn == null)
             return false;
 
         for(int i = 0; i < numPlayers; i++)
         {
-            if (turn.command[i] == null)
+            if (turn.commands[i] == null)
                 return false;
         }
 
@@ -147,14 +177,14 @@ public class GameController : MonoBehaviour
             obstacles[i].GetComponent<FActor>().LockStepUpdate();
     }
 
-    public void ReceiveCommand(MessageCommand command)
+    public void HandleReceivedCommand(MessageCommand command)
     {
         bool createTurn = true;
         for(int i = 0; i < turns.Count; i++)
         {
             if (turns[i].turn == command.turn)
             {
-                turns[i].command[command.pid] = command;
+                turns[i].commands[command.pid] = command;
                 createTurn = false;
             }
         }
@@ -163,8 +193,8 @@ public class GameController : MonoBehaviour
         {
             Turn turn = new Turn();
             turn.turn = command.turn;
-            turn.command = new MessageCommand[numPlayers];
-            turn.command[command.pid] = command;
+            turn.commands = new MessageCommand[numPlayers];
+            turn.commands[command.pid] = command;
             turns.Add(turn);
         }
     }
@@ -172,28 +202,50 @@ public class GameController : MonoBehaviour
     // TODO
     // Do this in intervals
     // Check if a command is stored for current intervals
-    public void StoreCommand(int cid, int x, int y)
+    public void SetCommand(int cid, int x, int y)
     {
-        currentCommunicationTurnCommand.cid = cid;
-        currentCommunicationTurnCommand.x = x;
-        currentCommunicationTurnCommand.y = y;
+        currentCommand.cid = cid;
+        currentCommand.x = x;
+        currentCommand.y = y;
     }
 
     public void SendNextCommand()
     {
         // Prepare
-        currentCommunicationTurnCommand.pid = 0; // Todo - relect actual current player ID
-        currentCommunicationTurnCommand.turn = currentCommunicationTurn + 2; // Execute two turns in the future
+        currentCommand.pid = playerID; // Todo - relect actual current player ID
+        currentCommand.turn = currentTurn + 2; // Execute two turns in the future
 
-        Debug.Log(playerID + ": sending turn " + currentCommunicationTurnCommand.turn);
+        if(currentCommand.cid != -1)
+            Debug.Log("Send command " + currentCommand.cid + " to exexute in turn " + currentCommand.turn);
 
-        //NetworkServer.SendToAll(MyMsgType.commandMsg, currentCommunicationTurnCommand);
+        networkManager.SendCommandFromClient(currentCommand);
+
+        // Reset for next turn
+        currentCommand.cid = -1;
+    }
+
+    public bool IsMultiplayer()
+    {
+        return multiplayer;
+    }
+
+    Squad FindSquadWithID(int playerID)
+    {
+        GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
+        for(int i = 0; i < squads.Length; i++)
+        {
+            Squad squad = squads[i].GetComponent<Squad>();
+            if (squad.playerID == playerID)
+                return squad;
+        }
+
+        return null;
     }
 }
 
 public class Turn
 {
     public int turn;
-    public MessageCommand[] command;
+    public MessageCommand[] commands;
 }
 

@@ -45,7 +45,7 @@ public class Client : NetworkBehaviour
     {
         MessageCommand cmd = networkMessage.ReadMessage<MessageCommand>();
         Debug.Log(gameController.playerID + ": received turn " + cmd.turn + " from " + cmd.pid);
-        gameController.ReceiveCommand(cmd);
+        gameController.HandleReceivedCommand(cmd);
     }
 
     [Command]
