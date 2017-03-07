@@ -23,24 +23,30 @@ public class Unit : Boid, LockStep
 
     Animator animator;
     Squad parentSquad;
-    FActor targetEnemy;
     List<FActor> obstacles = new List<FActor>(20);
+
+    // Movement
+    FInt moveSpeed;
+    FActor targetEnemy;
     FPoint FaheadFull;
     FPoint FaheadHalf;
     FPoint FidleVelocity = FPoint.Create();
     FInt maxSeeAhead = FInt.FromParts(1, 0);
 
-    // Designed FVelocity to get to target, without seperation, obstacle avoidance etc.
+    // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
     FPoint FdirectionVelocity = FPoint.Create(); 
 
     bool canFindNewTarget = true;
 
+    Grid grid;
     List<FActor> friendlyActorsClose = new List<FActor>(30);
     List<FActor> enemyActorsClose = new List<FActor>(30);
     List<Node> neighbours;
-    Grid grid;
+
+    // Health
     Health health;
 
+    // Attack
     int ticksBetweenAttacks = 20;
     int ticksSinceLastAttack = 0;
     
@@ -70,6 +76,7 @@ public class Unit : Boid, LockStep
         parentSquad = squad;
         health.SetMaxHitpoints(squad.unitMaxHitpoints);
         health.SetHitpoints(squad.unitMaxHitpoints);
+        moveSpeed = FInt.FromFloat(squad.unitMoveSpeed);
     }
 
     void Update()
@@ -345,8 +352,8 @@ public class Unit : Boid, LockStep
 
     protected void ExecuteMovement()
     {
-        Fpos.X += Fvelocity.X * parentSquad.unitMoveSpeed;
-        Fpos.Y += Fvelocity.Y * parentSquad.unitMoveSpeed;
+        Fpos.X += Fvelocity.X * moveSpeed;
+        Fpos.Y += Fvelocity.Y * moveSpeed;
 
         if (Fpos.X > grid.FmaxX) Fpos.X = grid.FmaxX;
         if (Fpos.X < grid.FminX) Fpos.X = grid.FminX;
@@ -374,7 +381,7 @@ public class Unit : Boid, LockStep
         {
             // Inside the slowing area
             steer = FPoint.Normalize(steer);
-            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorMultiply(steer, (dist / desiredSlowArea));
 
             if (dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
@@ -386,7 +393,7 @@ public class Unit : Boid, LockStep
         else
         {
             steer = FPoint.Normalize(steer);
-            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorMultiply(steer, moveSpeed);
         }
 
         steer = FPoint.VectorSubtract(steer, Fvelocity);
@@ -429,7 +436,7 @@ public class Unit : Boid, LockStep
         if (steer.X != 0 || steer.Y != 0)
         {
             steer = FPoint.Normalize(steer);
-            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorSubtract(steer, Fvelocity);
         }
 
@@ -460,7 +467,7 @@ public class Unit : Boid, LockStep
         if (steer.X != 0 || steer.Y != 0)
         {
             steer = FPoint.Normalize(steer);
-            steer = FPoint.VectorMultiply(steer, parentSquad.unitMoveSpeed);
+            steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorSubtract(steer, Fvelocity);
         }
 

@@ -4,11 +4,13 @@ using System.Collections.Generic;
 
 public class Squad : Boid, LockStep {
 
-    [Header("Unit types")]
+    [Header("Unit type")]
     public GameObject unitPrefab;
 
     [HideInInspector]
     public int faceDir = 1;
+
+    public int numStartingUnits = 10;
 
     FPoint FPosLast;
     FPoint FAverageUnitFVelocity;
@@ -20,13 +22,13 @@ public class Squad : Boid, LockStep {
         CHASE_SQUAD
     }
 
-    public SQUAD_STATES state = SQUAD_STATES.IDLE;
+    protected SQUAD_STATES state = SQUAD_STATES.IDLE;
 
     [Header("Units")]
     public int unitMaxHitpoints = 100;
     public int unitAttackDamage = 10;
-    public FInt unitMoveSpeed = FInt.FromParts(0, 400);
-    public FInt unitHealthRegenerateSpeed = FInt.FromParts(0, 50);
+    public float unitMoveSpeed = 0.4f;
+    public float unitHealthRegenerateSpeed = 0.05f;
     List<Unit> units = new List<Unit>(30);
 
     // Find closest target and set as leader of squad
@@ -48,14 +50,14 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
-        InitUnits(20);
+        InitUnits(numStartingUnits);
     }
 
     void InitUnits(int num)
     {
         for (var i = 0; i < num; i++)
         {
-            Vector2 pos = new Vector2(transform.position.x + (i % 6) * 0.2f, transform.position.y + (i % 2) * 0.3f);
+            Vector2 pos = new Vector2(transform.position.x + (i % 4) * 0.45f, transform.position.y + (i % 5) * 0.45f);
             GameObject newUnit = Instantiate(unitPrefab, pos, Quaternion.identity) as GameObject;
             newUnit.GetComponent<SpriteRenderer>().color = GetComponent<SpriteRenderer>().color;
             AddUnit(newUnit.GetComponent<Unit>());
