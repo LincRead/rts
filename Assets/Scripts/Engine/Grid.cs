@@ -30,6 +30,18 @@ public class Grid : MonoBehaviour
 
     void Start()
     {
+        if (gridSizeX < 16)
+        {
+            gridSizeX = 16;
+            Debug.LogError("gridSizeX must be set to minimum 16")
+        }
+
+        if (gridSizeY < 10)
+        {
+            gridSizeY = 10;
+            Debug.LogError("gridSizeY must be set to minimum 10")
+        }
+
         nodeDiameter = nodeRadius * 2;
         gridWorldSize.x = gridSizeX * nodeDiameter;
         gridWorldSize.y = gridSizeY * nodeDiameter;
@@ -177,5 +189,15 @@ public class Grid : MonoBehaviour
                     Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter / 3));
             }
         }
+    }
+
+    public float GetGridWorldSizeX()
+    {
+        return gridSizeX * nodeRadius * 2;
+    }
+
+    public float GetGridWorldSizeY()
+    {
+        return gridSizeY * nodeRadius * 2;
     }
 }
