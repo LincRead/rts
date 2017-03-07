@@ -33,13 +33,13 @@ public class Grid : MonoBehaviour
         if (gridSizeX < 16)
         {
             gridSizeX = 16;
-            Debug.LogError("gridSizeX must be set to minimum 16")
+            Debug.LogError("gridSizeX must be set to minimum 16");
         }
 
         if (gridSizeY < 10)
         {
             gridSizeY = 10;
-            Debug.LogError("gridSizeY must be set to minimum 10")
+            Debug.LogError("gridSizeY must be set to minimum 10");
         }
 
         nodeDiameter = nodeRadius * 2;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class RTSCamera : MonoBehaviour {
+public class CameraRTS : MonoBehaviour {
 
     public float scrollSpeed = 1f;
     public Grid grid;
@@ -24,8 +24,6 @@ public class RTSCamera : MonoBehaviour {
         rightBound = (float)((grid.GetGridWorldSizeX() / 2) - horzExtent);
         bottomBound = (float)(vertExtent - grid.GetGridWorldSizeY() / 2.0f);
         topBound = (float)(grid.GetGridWorldSizeY() / 2.0f - vertExtent);
-
-        Debug.Log(leftBound);
     }
 	
 	// Update is called once per frame

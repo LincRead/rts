@@ -25,7 +25,7 @@ public class Health : MonoBehaviour {
         if(maxHitpoints != 0)
         {
             float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
-            healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.5f, 3.0f, 0.0f);
+            healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.8f, 2.5f, 0.0f);
 
             if (scaleX <= 0.4f)
                 spriteRenderer.color = Color.red;
