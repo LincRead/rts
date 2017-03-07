@@ -4,6 +4,7 @@ using System.Collections;
 public class CameraRTS : MonoBehaviour {
 
     public float scrollSpeed = 1f;
+    public GameController gameController;
     public Grid grid;
 
     Vector2 oldMousePosition = Vector2.zero;
@@ -15,6 +16,7 @@ public class CameraRTS : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         float vertExtent = Camera.main.orthographicSize;
@@ -39,7 +41,7 @@ public class CameraRTS : MonoBehaviour {
             oldMousePosition = Vector2.zero;
         }
 
-        else if(Input.GetMouseButton(0))
+        else if(Input.GetMouseButton(0) && gameController.IsValidInput())
         {
             Vector2 newMousePosition = Input.mousePosition;
 
