@@ -11,7 +11,6 @@ public class ShowGold : MonoBehaviour {
 	void Start () {
         text = GetComponent<Text>();
         gameController = GetComponentInParent<GameController>();
-        Debug.Log(gameController);
     }
 	
 	// Update is called once per frame
