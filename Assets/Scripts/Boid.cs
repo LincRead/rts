@@ -55,7 +55,7 @@ public class Boid : FActor, LockStep
         if (obstacle == null)
             return false;
 
-        FInt radius = obstacle.GetFBoundingRadius() * 2;
+        FInt radius = obstacle.GetFBoundingRadius();
 
         Gizmos.color = Color.yellow;
         if (playerID == 0)

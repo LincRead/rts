@@ -366,7 +366,7 @@ public class Unit : Boid, LockStep
             return FidleVelocity;
 
         FPoint steer = FidleVelocity;
-        FInt desiredSlowArea = FInt.FromParts(1, 0);
+        FInt desiredSlowArea = FInt.FromParts(0, 500);
         FInt dist = FindDistanceToUnit(parentSquad);
         steer = FPoint.VectorSubtract(leader.GetFPosition(), Fpos);
 
