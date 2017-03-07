@@ -2,9 +2,9 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 
-public class ValidInput : MonoBehaviour {
+public class InputHoveringUI : MonoBehaviour {
 
-    bool validInput = true;
+    bool hoveringUI = true;
 
     void Start () {
 	
@@ -20,14 +20,14 @@ public class ValidInput : MonoBehaviour {
         if (Input.GetMouseButtonDown(0))
         {
             if (EventSystem.current.IsPointerOverGameObject())
-                validInput = false;
+                hoveringUI = false;
             else
-                validInput = true;
+                hoveringUI = true;
         }
     }
 
-    public bool GetValidInput()
+    public bool IsHoveringUI()
     {
-        return validInput;
+        return hoveringUI;
     }
 }

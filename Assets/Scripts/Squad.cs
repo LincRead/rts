@@ -69,7 +69,7 @@ public class Squad : Boid, LockStep {
             return;
 
         if (playerID == gameController.playerID 
-            && (Input.GetMouseButtonDown(0) && gameController.IsValidInput()))
+            && (Input.GetMouseButtonUp(0) && gameController.IsValidSquadInput()))
         {
             // Store so we can revert by end of loop
             FPosLast = Fpos;

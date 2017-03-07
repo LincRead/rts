@@ -14,8 +14,10 @@ public class CameraRTS : MonoBehaviour {
     private float topBound;
     private float bottomBound;
 
+    bool movingCamera = false;
+
     // Use this for initialization
-    void Start () {
+    void Start() {
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
@@ -27,21 +29,21 @@ public class CameraRTS : MonoBehaviour {
         bottomBound = (float)(vertExtent - grid.GetGridWorldSizeY() / 2.0f);
         topBound = (float)(grid.GetGridWorldSizeY() / 2.0f - vertExtent);
     }
-	
-	// Update is called once per frame
-	void Update () {
 
-	    if(Input.GetMouseButtonDown(0))
+    // Update is called once per frame
+    void Update() {
+
+        if (Input.GetMouseButtonDown(0))
         {
             oldMousePosition = Input.mousePosition;
         }
 
-        else if(Input.GetMouseButtonUp(0))
+        else if (Input.GetMouseButtonUp(0))
         {
-            oldMousePosition = Vector2.zero;
+            
         }
 
-        else if(Input.GetMouseButton(0) && gameController.IsValidInput())
+        else if (Input.GetMouseButton(0) && gameController.IsHoveringUI())
         {
             Vector2 newMousePosition = Input.mousePosition;
 
@@ -51,12 +53,26 @@ public class CameraRTS : MonoBehaviour {
             newCameraPos.y = Mathf.Clamp(newCameraPos.y, bottomBound, topBound);
             transform.position = newCameraPos;
 
+            if (oldMousePosition != newMousePosition)
+                movingCamera = true;
+
             oldMousePosition = newMousePosition;
         }
 
         else
         {
-            oldMousePosition = Vector2.zero;
+            Reset();
         }
-	}
+    }
+
+    void Reset()
+    {
+        oldMousePosition = Vector2.zero;
+        movingCamera = false;
+    }
+
+    public bool IsMoving()
+    {
+        return movingCamera;
+    }
 }
