@@ -31,7 +31,7 @@ public class Unit : Boid, LockStep
     FPoint FaheadFull;
     FPoint FaheadHalf;
     FPoint FidleVelocity = FPoint.Create();
-    FInt maxSeeAhead = FInt.FromParts(1, 0);
+    FInt maxSeeAhead = FInt.FromParts(2, 0);
 
     // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
     FPoint FdirectionVelocity = FPoint.Create(); 

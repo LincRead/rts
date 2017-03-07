@@ -23,7 +23,7 @@ public class GameController : MonoBehaviour
     float timeSinceLastTurn = 0.0f;
 
     // Gameplay tick
-    float timeBetweenGameplayTicks = .05f;
+    public static float timeBetweenGameplayTicks = .05f;
     float timeSinceLastGameplayTick = 0.0f;
 
     // Command
@@ -41,6 +41,8 @@ public class GameController : MonoBehaviour
 
     private bool multiplayer = false;
 
+    List<Squad> squads = new List<Squad>(12);
+
     // Todo: make dynamic based on players connected to game
     private int numPlayers = 2;
 
@@ -50,6 +52,12 @@ public class GameController : MonoBehaviour
         inputHoveringUI = GetComponent<InputHoveringUI>();
         cameraRTS = Camera.main.GetComponent<CameraRTS>();
         commandToSend = new MessageCommand();
+
+        GameObject[] squadPrefabs = GameObject.FindGameObjectsWithTag("Squad");
+        for(int i = 0; i < squadPrefabs.Length; i++)
+        {
+            squads.Add(squadPrefabs[i].GetComponent<Squad>());
+        }
 
         for (int i = 0; i < numPlayers; i++)
             playersReady[i] = false;
@@ -89,9 +97,8 @@ public class GameController : MonoBehaviour
     {
         timeSinceLastGameplayTick = 0.0f;
 
-        GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
-        for (int i = 0; i < squads.Length; i++)
-            squads[i].GetComponent<Squad>().LockStepUpdate();
+        for (int i = 0; i < squads.Count; i++)
+            squads[i].LockStepUpdate();
 
         GameObject[] obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         for (int i = 0; i < obstacles.Length; i++)
@@ -149,7 +156,7 @@ public class GameController : MonoBehaviour
         {
             // Move squad to Node
             case 0:
-                FindSquadWithID(command.pid).MoveToNode(command.x, command.y);
+                GetSquadWithPlayerID(command.pid).MoveToNode(command.x, command.y);
 
                 break;
 
@@ -228,17 +235,20 @@ public class GameController : MonoBehaviour
         return null;
     }
 
-    Squad FindSquadWithID(int playerID)
+    Squad GetSquadWithPlayerID(int playerID)
     {
-        GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
-        for(int i = 0; i < squads.Length; i++)
+        for(int i = 0; i < squads.Count; i++)
         {
-            Squad squad = squads[i].GetComponent<Squad>();
-            if (squad.playerID == playerID)
-                return squad;
+            if (squads[i].playerID == playerID)
+                return squads[i];
         }
 
         return null;
+    }
+
+    public Squad GetSquadLocalPlayer()
+    {
+        return squads[playerID];
     }
 
     public bool IsMultiplayer()
@@ -254,6 +264,11 @@ public class GameController : MonoBehaviour
     public bool IsValidSquadInput()
     {
         return inputHoveringUI.IsHoveringUI() && !cameraRTS.IsMoving();
+    }
+
+    public static float GetTicksPerSecond()
+    {
+        return 1f / timeBetweenGameplayTicks;
     }
 }
 

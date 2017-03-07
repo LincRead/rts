@@ -38,6 +38,7 @@ public class Squad : Boid, LockStep {
     FInt minDistClosestUnitToTarget = FInt.FromParts(0, 320);
 
     GameController gameController;
+    Gold gold;
 
     protected override void Awake()
     {
@@ -49,6 +50,8 @@ public class Squad : Boid, LockStep {
     protected override void Start()
     {
         base.Start();
+
+        gold = GetComponent<Gold>();
 
         InitUnits(numStartingUnits);
     }
@@ -184,6 +187,8 @@ public class Squad : Boid, LockStep {
 
         for (int i = 0; i < units.Count; i++)
             units[i].GetComponent<FActor>().LockStepUpdate();
+
+        gold.LockstepUpdate();
     }
 
     public void AddUnit(Unit newUnit)
@@ -202,6 +207,8 @@ public class Squad : Boid, LockStep {
     }
 
     public int GetSquadSize() { return units.Count; }
+
+    public int GetGold() { return gold.GetAmount();  }
 
     public List<Unit> GetUnits() { return units;  }
 }
