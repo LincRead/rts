@@ -13,6 +13,7 @@ public class GameController : MonoBehaviour
 {
     // Components
     NetworkManagerExtended networkManager;
+    ValidInput validInput;
 
     // Turn
     List<Turn> turns = new List<Turn>();
@@ -45,6 +46,7 @@ public class GameController : MonoBehaviour
     void Start()
     {
         networkManager = GetComponent<NetworkManagerExtended>();
+        validInput = GetComponent<ValidInput>();
         commandToSend = new MessageCommand();
 
         for (int i = 0; i < numPlayers; i++)
@@ -240,6 +242,11 @@ public class GameController : MonoBehaviour
     public bool IsMultiplayer()
     {
         return multiplayer;
+    }
+
+    public bool IsValidInput()
+    {
+        return validInput.GetValidInput();
     }
 }
 
