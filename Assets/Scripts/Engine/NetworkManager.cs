@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-public class NetworkManagerExtended : MonoBehaviour
+public class NetworkManager : MonoBehaviour
 {
-    public bool isAtStartup = true;
-    public int numPlayers = 0;
+    private bool isAtStartup = true;
 
     NetworkClient myClient;
     GameController gameController;

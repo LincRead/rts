@@ -12,9 +12,9 @@ public class Turn
 public class GameController : MonoBehaviour
 {
     // Components
-    NetworkManagerExtended networkManager;
+    NetworkManager networkManager;
     InputHoveringUI inputHoveringUI;
-    CameraRTS camera;
+    CameraRTS cameraRTS;
 
     // Turn
     List<Turn> turns = new List<Turn>();
@@ -46,9 +46,9 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        networkManager = GetComponent<NetworkManagerExtended>();
+        networkManager = GetComponent<NetworkManager>();
         inputHoveringUI = GetComponent<InputHoveringUI>();
-        camera = Camera.main.GetComponent<CameraRTS>();
+        cameraRTS = Camera.main.GetComponent<CameraRTS>();
         commandToSend = new MessageCommand();
 
         for (int i = 0; i < numPlayers; i++)
@@ -253,7 +253,7 @@ public class GameController : MonoBehaviour
 
     public bool IsValidSquadInput()
     {
-        return inputHoveringUI.IsHoveringUI() && !camera.IsMoving();
+        return inputHoveringUI.IsHoveringUI() && !cameraRTS.IsMoving();
     }
 }
 
