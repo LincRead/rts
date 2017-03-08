@@ -258,14 +258,38 @@ public class Unit : Boid, LockStep
 
         if (isLeader)
         {
-            seek = ComputeSeek(parentSquad, true);
-            AddSteeringForce(seek, FInt.FromParts(1, 0));
+            List<Node> newPath = pathFinding.FindPath(parentSquad.GetRealPosToVector3());
+
+            if (newPath != null)
+                path = newPath;
+
+            if (path != null && path.Count > 0)
+            {
+                if (GetDistanceBetweenPoints(path[0]._FworldPosition, GetFPosition()) < FInt.FromParts(0, 500))
+                    path.RemoveAt(0);
+
+                if (path.Count > 0)
+                    seek = ComputeSeek(path[0]._FworldPosition, true);
+                else // Reached target node
+                    currentState = UNIT_STATES.IDLE;
+
+                AddSteeringForce(seek, FInt.FromParts(1, 0));
+            }
+
+            else // No paths found, so don't move.
+                currentState = UNIT_STATES.IDLE;
         }
 
         else if (parentSquad.leader != null)
         {
+            // Todo don't clow down close to Leader
             seek = ComputeSeek(parentSquad.leader, true);
             AddSteeringForce(seek, FInt.FromParts(1, 0));
+        }
+
+        else
+        {
+            currentState = UNIT_STATES.IDLE;
         }
 
         // Desired velocity
@@ -373,15 +397,21 @@ public class Unit : Boid, LockStep
         Fvelocity.Y += steeringForce.Y * weight;
     }
 
-    protected FPoint ComputeSeek(FActor leader, bool slowDown)
+    protected FPoint ComputeSeek(FActor target, bool slowDown)
     {
-        if (leader == null)
+        if (target == null)
             return FidleVelocity;
 
+        return ComputeSeek(target.GetFPosition(), slowDown);
+    }
+
+    protected FPoint ComputeSeek(FPoint targetPosition, bool slowDown)
+    {
         FPoint steer = FidleVelocity;
         FInt desiredSlowArea = FInt.FromParts(0, 500);
         FInt dist = GetDistanceToUnit(parentSquad);
-        steer = FPoint.VectorSubtract(leader.GetFPosition(), Fpos);
+
+        steer = FPoint.VectorSubtract(targetPosition, Fpos);
 
         if (slowDown && dist < desiredSlowArea)
         {
@@ -410,7 +440,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 350);
+        FInt desiredseparation = FInt.FromParts(0, 300);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)

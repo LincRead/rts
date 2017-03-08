@@ -31,6 +31,9 @@ public class Squad : Boid, LockStep {
     public float unitHealthRegenerateSpeed = 0.05f;
     List<Unit> units = new List<Unit>(30);
 
+    [HideInInspector]
+    public List<Node> path;
+
     // Find closest target and set as leader of squad
     [HideInInspector]
     public Unit leader;
@@ -76,32 +79,37 @@ public class Squad : Boid, LockStep {
         if (playerID == gameController.playerID 
             && (Input.GetMouseButtonUp(0) && gameController.IsValidSquadInput()))
         {
-            // Store so we can revert by end of loop
-            FPosLast = Fpos;
 
             Node node = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            Fpos = node._FworldPosition;
-            CalculateClosestUnitToNode();
 
-            if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
+            if (node.walkable)
             {
-                if (gameController.IsMultiplayer())
-                {
-                    gameController.SetNextCommand(0, node.gridPosX, node.gridPosY);
+                            // Store so we can revert by end of loop
+            FPosLast = Fpos;
 
-                    // Don't change before Server serves the command
-                    Fpos = FPosLast;
+                Fpos = node._FworldPosition;
+                CalculateClosestUnitToNode();
+
+                if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
+                {
+                    if (gameController.IsMultiplayer())
+                    {
+                        gameController.SetNextCommand(0, node.gridPosX, node.gridPosY);
+
+                        // Don't change before Server serves the command
+                        Fpos = FPosLast;
+                    }
+
+                    else
+                    {
+                        MoveToTarget(node.gridPosX, node.gridPosY);
+                    }
                 }
-                    
+
                 else
                 {
-                    MoveToTarget(node.gridPosX, node.gridPosY);
+                    Fpos = FPosLast;
                 }
-            }
-
-            else
-            {
-                Fpos = FPosLast;
             }
         }
 
@@ -139,6 +147,9 @@ public class Squad : Boid, LockStep {
     {
         Node newTargetNode = pathFinding.GetNodeFromGridPos(x, y);
         Fpos = newTargetNode._FworldPosition;
+
+        FindNewLeader();
+
         state = SQUAD_STATES.MOVE_TO_TARGET;
 
         for (int i = 0; i < units.Count; i++)
@@ -183,8 +194,6 @@ public class Squad : Boid, LockStep {
 
     public override void LockStepUpdate()
     {
-        FindNewLeader();
-
         for (int i = 0; i < units.Count; i++)
             units[i].GetComponent<FActor>().LockStepUpdate();
 
