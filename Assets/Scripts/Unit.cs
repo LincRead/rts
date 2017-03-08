@@ -158,6 +158,7 @@ public class Unit : Boid, LockStep
         HandleAnimations();
         HandleFaceDir();
         ExecuteMovement();
+        Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(Fpos.X.ToFloat() + Fvelocity.X.ToFloat(), Fpos.Y.ToFloat() + +Fvelocity.Y.ToFloat()));
     }
 
     public void MoveToTarget()
@@ -270,9 +271,11 @@ public class Unit : Boid, LockStep
         // Desired velocity
         FdirectionVelocity = seek;
 
-        FPoint seperation = ComputeSeperation(friendlyActorsClose);
-        AddSteeringForce(seperation, FInt.FromParts(0, 600));
-
+        if (!isLeader)
+        {
+            FPoint seperation = ComputeSeperation(friendlyActorsClose);
+            AddSteeringForce(seperation, FInt.FromParts(0, 600));
+        }
 
         if(!canFindNewTarget)
         {
@@ -457,13 +460,11 @@ public class Unit : Boid, LockStep
         FaheadHalf = FPoint.VectorAdd(FaheadHalf, GetFPosition());
 
         FPoint steer = FidleVelocity;
-        bool col = false;
         for (int i = 0; i < actors.Count; i++)
         {
             FActor obstacle = actors[i].GetComponent<FActor>();
             if (LineIntersectsObstacle(FaheadFull, FaheadHalf, Fpos, obstacle))
             {
-                col = true;
                 steer.X = FaheadFull.X - obstacle.GetFPosition().X;
                 steer.Y = FaheadFull.Y - obstacle.GetFPosition().Y;
                 break;
@@ -476,10 +477,6 @@ public class Unit : Boid, LockStep
             steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorSubtract(steer, Fvelocity);
         }
-        if(col)
-            Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(FaheadFull.X.ToFloat(), FaheadFull.Y.ToFloat()), Color.green);
-        else
-            Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(FaheadFull.X.ToFloat(), FaheadFull.Y.ToFloat()), Color.blue);
 
         return steer;
     }

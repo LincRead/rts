@@ -67,9 +67,9 @@ public class Boid : FActor, LockStep
 
     protected bool LineIntersectsObstacle(FPoint aheadFull,  FPoint aheadHalf, FPoint currPos, FActor obstacle)
     {
-        Debug.DrawLine(new Vector2(aheadFull.X.ToFloat(), aheadFull.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()), Color.red);
-        Debug.DrawLine(new Vector2(aheadHalf.X.ToFloat(), aheadHalf.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()), Color.yellow);
-        Debug.DrawLine(new Vector2(currPos.X.ToFloat(), currPos.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
+        Debug.DrawLine(new Vector2(aheadFull.X.ToFloat(), aheadFull.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.red);
+        Debug.DrawLine(new Vector2(aheadHalf.X.ToFloat(), aheadHalf.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.yellow);
+        Debug.DrawLine(new Vector2(currPos.X.ToFloat(), currPos.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.green);
 
         FInt radius = obstacle.GetFBoundingRadius();
         FInt distA = Distance(aheadFull, obstacle.GetFPosition());
