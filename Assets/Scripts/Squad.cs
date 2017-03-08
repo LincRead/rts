@@ -31,9 +31,6 @@ public class Squad : Boid, LockStep {
     public float unitHealthRegenerateSpeed = 0.05f;
     List<Unit> units = new List<Unit>(30);
 
-    [HideInInspector]
-    public List<Node> path;
-
     // Find closest target and set as leader of squad
     [HideInInspector]
     public Unit leader;
@@ -57,6 +54,10 @@ public class Squad : Boid, LockStep {
         gold = GetComponent<Gold>();
 
         InitUnits(numStartingUnits);
+        FindNewLeader();
+
+        for (int i = 0; i < units.Count; i++)
+            units[i].currentState = Unit.UNIT_STATES.IDLE;
     }
 
     void InitUnits(int num)

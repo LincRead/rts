@@ -275,20 +275,12 @@ public class Unit : Boid, LockStep
 
                 AddSteeringForce(seek, FInt.FromParts(1, 0));
             }
-
-            else // No paths found, so don't move.
-                currentState = UNIT_STATES.IDLE;
         }
 
         else if (parentSquad.leader != null)
         {
             seek = ComputeSeek(parentSquad.leader, false);
             AddSteeringForce(seek, FInt.FromParts(1, 0));
-        }
-
-        else
-        {
-            currentState = UNIT_STATES.IDLE;
         }
 
         // Desired velocity
@@ -543,7 +535,7 @@ public class Unit : Boid, LockStep
                 currentState = UNIT_STATES.ATTACKING;
             }
 
-            else if (parentSquad.leader.currentState != UNIT_STATES.MOVE 
+            else if (parentSquad.leader.currentState != UNIT_STATES.MOVE
                 && (currentState != UNIT_STATES.ATTACKING || GetDistanceToUnit(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
             {
                 currentState = UNIT_STATES.CHASING;
