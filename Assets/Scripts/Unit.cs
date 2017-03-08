@@ -282,8 +282,7 @@ public class Unit : Boid, LockStep
 
         else if (parentSquad.leader != null)
         {
-            // Todo don't clow down close to Leader
-            seek = ComputeSeek(parentSquad.leader, true);
+            seek = ComputeSeek(parentSquad.leader, false);
             AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
