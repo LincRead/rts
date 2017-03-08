@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+// I want to make the world a better place.
+
 public class Unit : Boid, LockStep
 {
     public enum UNIT_STATES
@@ -31,7 +33,7 @@ public class Unit : Boid, LockStep
     FPoint FaheadFull;
     FPoint FaheadHalf;
     FPoint FidleVelocity = FPoint.Create();
-    FInt maxSeeAhead = FInt.FromParts(2, 0);
+    FInt maxSeeAhead = FInt.FromParts(1, 0);
 
     // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
     FPoint FdirectionVelocity = FPoint.Create(); 
@@ -271,6 +273,7 @@ public class Unit : Boid, LockStep
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
         AddSteeringForce(seperation, FInt.FromParts(0, 600));
 
+
         if(!canFindNewTarget)
         {
             FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
@@ -374,7 +377,7 @@ public class Unit : Boid, LockStep
 
         FPoint steer = FidleVelocity;
         FInt desiredSlowArea = FInt.FromParts(0, 500);
-        FInt dist = FindDistanceToUnit(parentSquad);
+        FInt dist = GetDistanceToUnit(parentSquad);
         steer = FPoint.VectorSubtract(leader.GetFPosition(), Fpos);
 
         if (slowDown && dist < desiredSlowArea)
@@ -409,7 +412,7 @@ public class Unit : Boid, LockStep
 
         for (int i = 0; i < actors.Count; i++)
         {
-            FInt dist = FindDistanceToUnit(actors[i]);
+            FInt dist = GetDistanceToUnit(actors[i]);
 
             if (dist > 0 && dist < desiredseparation)
             {
@@ -445,22 +448,25 @@ public class Unit : Boid, LockStep
 
     protected FPoint ComputeObstacleAvoidance(List<FActor> actors)
     {
-        FaheadFull = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
-        FaheadFull = FPoint.VectorMultiply(FaheadFull, maxSeeAhead);
+        FaheadFull = FPoint.Normalize(Fvelocity);
+        FaheadFull = FPoint.VectorMultiply(FaheadFull, FInt.FromParts(1, 0));
+        FaheadFull = FPoint.VectorAdd(FaheadFull, GetFPosition());
 
-        FaheadHalf = FPoint.VectorAdd(GetFPosition(), FPoint.Normalize(Fvelocity));
-        FaheadHalf = FPoint.VectorMultiply(FaheadHalf, maxSeeAhead * FInt.FromParts(0, 500));
+        FaheadHalf = FPoint.Normalize(Fvelocity);
+        FaheadHalf = FPoint.VectorMultiply(FaheadHalf, FInt.FromParts(0, 500));
+        FaheadHalf = FPoint.VectorAdd(FaheadHalf, GetFPosition());
 
-        FPoint steer = FPoint.Create();
-
+        FPoint steer = FidleVelocity;
+        bool col = false;
         for (int i = 0; i < actors.Count; i++)
         {
             FActor obstacle = actors[i].GetComponent<FActor>();
-            if (LineIntersectsObstacle(FaheadHalf, FaheadFull, obstacle))
+            if (LineIntersectsObstacle(FaheadFull, FaheadHalf, Fpos, obstacle))
             {
+                col = true;
                 steer.X = FaheadFull.X - obstacle.GetFPosition().X;
                 steer.Y = FaheadFull.Y - obstacle.GetFPosition().Y;
-                steer = FPoint.Normalize(steer);
+                break;
             }
         }
 
@@ -470,6 +476,10 @@ public class Unit : Boid, LockStep
             steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorSubtract(steer, Fvelocity);
         }
+        if(col)
+            Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(FaheadFull.X.ToFloat(), FaheadFull.Y.ToFloat()), Color.green);
+        else
+            Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(FaheadFull.X.ToFloat(), FaheadFull.Y.ToFloat()), Color.blue);
 
         return steer;
     }
@@ -482,7 +492,7 @@ public class Unit : Boid, LockStep
             if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
                 continue;
 
-            FInt dist = FindDistanceToUnit(enemyActorsClose[i]);
+            FInt dist = GetDistanceToUnit(enemyActorsClose[i]);
             if (dist < FInt.Create(3) && dist < shortestDistance)
             {
                 shortestDistance = dist;
@@ -508,7 +518,7 @@ public class Unit : Boid, LockStep
             }
 
             else if (parentSquad.leader.currentState != UNIT_STATES.MOVE 
-                && (currentState != UNIT_STATES.ATTACKING || FindDistanceToUnit(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
+                && (currentState != UNIT_STATES.ATTACKING || GetDistanceToUnit(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
             {
                 currentState = UNIT_STATES.CHASING;
             }
@@ -546,16 +556,15 @@ public class Unit : Boid, LockStep
         // Trigger Kill animation
     }
 
-    FInt FindDistanceToUnit(FActor unit)
+    FInt GetDistanceToUnit(FActor unit)
     {
         if (unit == null) return FInt.Create(1000);
         return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
     }
 
-    FInt FindDistanceToPoint(FPoint a, FPoint b)
+    FInt GetDistanceBetweenPoints(FPoint a, FPoint b)
     {
-        FPoint dist = FPoint.VectorSubtract(a, b);
-        return FPoint.Sqrt((dist.X * dist.X) + (dist.Y * dist.Y));
+        return ((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y));
     }
 
     void OnDrawGizmos()

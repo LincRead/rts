@@ -65,11 +65,22 @@ public class Boid : FActor, LockStep
         return distA <= radius;
     }
 
-    protected bool LineIntersectsObstacle(FPoint aheadHalf, FPoint aheadFull, FActor obstacle)
+    protected bool LineIntersectsObstacle(FPoint aheadFull,  FPoint aheadHalf, FPoint currPos, FActor obstacle)
     {
+        Debug.DrawLine(new Vector2(aheadFull.X.ToFloat(), aheadFull.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()), Color.red);
+        Debug.DrawLine(new Vector2(aheadHalf.X.ToFloat(), aheadHalf.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()), Color.yellow);
+        Debug.DrawLine(new Vector2(currPos.X.ToFloat(), currPos.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
+
         FInt radius = obstacle.GetFBoundingRadius();
-        FInt distA = (aheadFull.X - obstacle.GetFPosition().X) * (aheadFull.X - obstacle.GetFPosition().X) + (aheadFull.Y - obstacle.GetFPosition().Y) * (aheadFull.Y - obstacle.GetFPosition().Y);
-        FInt distB = (aheadHalf.X - obstacle.GetFPosition().X) * (aheadHalf.X - obstacle.GetFPosition().X) + (aheadHalf.Y - obstacle.GetFPosition().Y) * (aheadHalf.Y - obstacle.GetFPosition().Y);
-        return distA <= radius || distB < radius;
+        FInt distA = Distance(aheadFull, obstacle.GetFPosition());
+        FInt distB = Distance(aheadHalf, obstacle.GetFPosition());
+        FInt distC = Distance(currPos, obstacle.GetFPosition());
+
+        return distA <= radius * radius || distB <= radius * radius || distC <= radius * radius;
+    }
+
+    FInt Distance(FPoint a, FPoint b)
+    {
+        return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
     }
 }
