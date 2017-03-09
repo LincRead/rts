@@ -46,5 +46,8 @@ public class ClickIndicator : MonoBehaviour {
         transform.position = pos;
         spriteRenderer.enabled = true;
         timeSinceActionActivated = 0.0f;
+
+        LeanTween.scale(gameObject, new Vector3(0.75f, 0.75f, 1.0f), 0.25f);
+        LeanTween.scale(gameObject, new Vector3(1.0f, 1.0f, 1.0f), 0.25f).setDelay(0.25f);
     }
 }

@@ -102,6 +102,8 @@ public class Squad : Boid, LockStep {
                     }
                 }
 
+                // TODO check radius instead when BSP is implemented
+                // Maybe same algorithm as FindNewTargetEnemy in Unit.cs
                 // Show type of action activated
                 ClickIndicator cind = GameObject.FindGameObjectWithTag("ClickIndicator").GetComponent<ClickIndicator>();
                 if (enemyIsStandingOnNode)
@@ -109,7 +111,7 @@ public class Squad : Boid, LockStep {
                 else
                     cind.ActivateMoveSprite(mousePosition);
 
-                if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
+                if (closetDistUnitToTarget >= minDistClosestUnitToTarget || enemyIsStandingOnNode)
                 {
                     if (gameController.IsMultiplayer())
                     {

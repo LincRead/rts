@@ -8,12 +8,8 @@ public class Gold : MonoBehaviour {
     int ticksBetweenGoldGeneration = 40;
     int currAmount;
 
-    GameController gameController;
-
     // Use this for initialization
     void Start () {
-        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
-
         currAmount = startAmount;
     }
 	
