@@ -273,14 +273,12 @@ public class Unit : Boid, LockStep
 
                 if (path.Count > 0)
                     seek = ComputeSeek(path[0]._FworldPosition, true);
-                else // Reached target node
-                    currentState = UNIT_STATES.IDLE;
-
-                AddSteeringForce(seek, FInt.FromParts(1, 0));
             }
 
             else
-                currentState = UNIT_STATES.IDLE;
+                seek = ComputeSeek(parentSquad.GetFPosition(), true);
+
+            AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
         else if (parentSquad.leader != null)
@@ -405,7 +403,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeek(FPoint targetPosition, bool slowDown)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredSlowArea = FInt.FromParts(0, 500);
+        FInt desiredSlowArea = FInt.FromParts(0, 200);
         FInt dist = GetDistanceToFActor(parentSquad);
 
         steer = FPoint.VectorSubtract(targetPosition, Fpos);

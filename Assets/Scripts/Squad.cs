@@ -80,13 +80,12 @@ public class Squad : Boid, LockStep {
         if (playerID == gameController.playerID 
             && (Input.GetMouseButtonUp(0) && gameController.IsValidSquadInput()))
         {
-
             Node node = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
 
             if (node.walkable)
             {
-                            // Store so we can revert by end of loop
-            FPosLast = Fpos;
+                // Store so we can revert by end of loop
+                FPosLast = Fpos;
 
                 Fpos = node._FworldPosition;
                 CalculateClosestUnitToNode();
@@ -118,9 +117,17 @@ public class Squad : Boid, LockStep {
         transform.position = GetRealPosToVector3();
     }
 
-    void MoveToTarget(int x, int y)
+    public void MoveToTarget(int x, int y)
     {
-        MoveToNode(x, y);
+        Node newTargetNode = pathFinding.GetNodeFromGridPos(x, y);
+        Fpos = newTargetNode._FworldPosition;
+
+        FindNewLeader();
+
+        state = SQUAD_STATES.MOVE_TO_TARGET;
+
+        for (int i = 0; i < units.Count; i++)
+            units[i].MoveToTarget();
     }
 
     void UpdateSquadDirection()
@@ -142,19 +149,6 @@ public class Squad : Boid, LockStep {
             faceDir = 1;
         if (FAverageUnitFVelocity.X < FInt.FromParts(0, 100) * -1)
             faceDir = -1;
-    }
-
-    public void MoveToNode(int x, int y)
-    {
-        Node newTargetNode = pathFinding.GetNodeFromGridPos(x, y);
-        Fpos = newTargetNode._FworldPosition;
-
-        FindNewLeader();
-
-        state = SQUAD_STATES.MOVE_TO_TARGET;
-
-        for (int i = 0; i < units.Count; i++)
-            units[i].MoveToTarget();
     }
 
     public void FindNewLeader()

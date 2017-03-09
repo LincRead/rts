@@ -156,7 +156,7 @@ public class GameController : MonoBehaviour
         {
             // Move squad to Node
             case 0:
-                GetSquadWithPlayerID(command.pid).MoveToNode(command.x, command.y);
+                GetSquadWithPlayerID(command.pid).MoveToTarget(command.x, command.y);
 
                 break;
 
