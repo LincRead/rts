@@ -40,6 +40,9 @@ public class Squad : Boid, LockStep {
     GameController gameController;
     Gold gold;
 
+    [Header("References")]
+    public HQ hq;
+
     protected override void Awake()
     {
         base.Awake();
@@ -52,7 +55,6 @@ public class Squad : Boid, LockStep {
         base.Start();
 
         gold = GetComponent<Gold>();
-
         InitUnits(numStartingUnits);
         FindNewLeader();
 
@@ -231,4 +233,9 @@ public class Squad : Boid, LockStep {
     public int GetGold() { return gold.GetAmount();  }
 
     public List<Unit> GetUnits() { return units;  }
+
+    public HQ GetHQ()
+    {
+        return hq;
+    }
 }

@@ -1,10 +1,14 @@
 fileFormatVersion: 2
 guid: ab65d6dc1b0a87f4d8261e49833ebfdf
-timeCreated: 1488417283
+timeCreated: 1489044986
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - healthBarPrefab: {fileID: 1000012986813388, guid: 2784ae44c229b804c803877dbc84d08a,
+      type: 2}
+  - regenIconPrefab: {fileID: 1000013820820676, guid: 2bfeb53ee02865142ba34ff482c9e6b4,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

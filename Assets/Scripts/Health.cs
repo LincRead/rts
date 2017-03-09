@@ -4,20 +4,36 @@ using System.Collections;
 public class Health : MonoBehaviour {
 
     public GameObject healthBarPrefab;
-    public float regeneratePerSecond = 2f;
+    public GameObject regenIconPrefab;
+
     GameObject healthBarInstance;
+    GameObject regenIconInstance;
+    SpriteRenderer regenIconInstanceSpriteRenderer;
+
+    public float regeneratePerSecond = 2f;
+    public float fastRegenerateMultiplier = 3f;
+
     SpriteRenderer spriteRenderer;
     FInt maxHitpoints = FInt.Create(0);
     FInt hitpoints = FInt.Create(0);
     FInt zeroHitpoints = FInt.Create(0);
     FInt FregeneratePerTick;
+    FInt FfastRegenerateMultiplier;
 
     void Start () {
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
-        new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
+
+        regenIconInstance = GameObject.Instantiate(regenIconPrefab,
+            new Vector3(transform.position.x, transform.position.y + 0.9f, 0.0f), Quaternion.identity) as GameObject;
+        regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
+        regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
+        regenIconInstanceSpriteRenderer.enabled = false;
+
         spriteRenderer = healthBarInstance.GetComponent<SpriteRenderer>();
         FregeneratePerTick = FInt.FromFloat((regeneratePerSecond / 20));
+        FfastRegenerateMultiplier = FInt.FromFloat(fastRegenerateMultiplier);
     }
 
     void Update()
@@ -43,6 +59,11 @@ public class Health : MonoBehaviour {
         }
     }
 
+    public void RegenerateNothing()
+    {
+        regenIconInstanceSpriteRenderer.enabled = false;
+    }
+
     public void Regenerate()
     {
         if (hitpoints == zeroHitpoints)
@@ -52,6 +73,25 @@ public class Health : MonoBehaviour {
 
         if (hitpoints > maxHitpoints)
             hitpoints = maxHitpoints;
+
+        regenIconInstanceSpriteRenderer.enabled = false;
+    }
+
+    public void FastRegenerate()
+    {
+        if (hitpoints == zeroHitpoints)
+            return;
+
+        hitpoints += FregeneratePerTick * FfastRegenerateMultiplier;
+
+        if (hitpoints > maxHitpoints)
+        {
+            hitpoints = maxHitpoints;
+            regenIconInstanceSpriteRenderer.enabled = false;
+        }
+
+        else
+            regenIconInstanceSpriteRenderer.enabled = true;
     }
 
     public void ChangeHitpoints(int value)

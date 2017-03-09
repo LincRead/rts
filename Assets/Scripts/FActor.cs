@@ -12,6 +12,8 @@ public class FActor : MonoBehaviour, LockStep
     public float boundingRadius = 1;
     protected FInt FboundingRadius;
 
+    protected FInt FlargeNumber = FInt.Create(1000); // Memory
+
     protected SpriteRenderer spriteRenderer;
 
     protected virtual void Awake()

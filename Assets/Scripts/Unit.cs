@@ -28,13 +28,14 @@ public class Unit : Boid, LockStep
     FPoint FidleVelocity = FPoint.Create();
     FActor targetEnemy;
 
+    // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
+    FPoint FdirectionVelocity = FPoint.Create();
+
     // Preset numbers
     FPoint FaheadFull;
     FPoint FaheadHalf;
-    FInt FlargeNumber = FInt.Create(1000);
 
-    // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
-    FPoint FdirectionVelocity = FPoint.Create(); 
+    FInt FradiusCloseToHQ = FInt.Create(5);
 
     bool canFindNewTarget = true;
 
@@ -132,7 +133,9 @@ public class Unit : Boid, LockStep
         base.LockStepUpdate();
 
         // Update health
-        if(currentState != UNIT_STATES.ATTACKING)
+        if(isCloseToHQ())
+            health.FastRegenerate();
+        else
             health.Regenerate();
 
         // Reset interpolation
@@ -589,6 +592,11 @@ public class Unit : Boid, LockStep
     {
         Gizmos.color = new Color(0.5f, 0.2f, 1.0f, 0.8f);
         Gizmos.DrawWireSphere(GetRealPosToVector3(), boundingRadius);
+    }
+
+    bool isCloseToHQ()
+    {
+        return (GetDistanceBetweenPoints(GetFPosition(), parentSquad.GetHQ().GetFPosition()) < FradiusCloseToHQ * FradiusCloseToHQ);
     }
 
     void CanFindNewTarget() { canFindNewTarget = true; }
