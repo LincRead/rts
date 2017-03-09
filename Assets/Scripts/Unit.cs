@@ -23,26 +23,27 @@ public class Unit : Boid, LockStep
     [HideInInspector]
     public bool isLeader = false;
 
-    Animator animator;
-    Squad parentSquad;
-    List<FActor> obstacles = new List<FActor>(20);
-
     // Movement
     FInt moveSpeed;
+    FPoint FidleVelocity = FPoint.Create();
     FActor targetEnemy;
+
+    // Preset numbers
     FPoint FaheadFull;
     FPoint FaheadHalf;
-    FPoint FidleVelocity = FPoint.Create();
-    FInt maxSeeAhead = FInt.FromParts(1, 0);
+    FInt FlargeNumber = FInt.Create(1000);
 
     // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
     FPoint FdirectionVelocity = FPoint.Create(); 
 
     bool canFindNewTarget = true;
 
+    Animator animator;
     Grid grid;
+    Squad parentSquad;
     List<FActor> friendlyActorsClose = new List<FActor>(30);
     List<FActor> enemyActorsClose = new List<FActor>(30);
+    List<FActor> obstacles = new List<FActor>(20);
     List<Node> neighbours;
 
     // Health
@@ -59,7 +60,9 @@ public class Unit : Boid, LockStep
         animator = GetComponent<Animator>();
 
         health = GetComponent<Health>();
-        if (health == null) Debug.LogError("Unit always needs a Health script attached");
+
+        if (health == null)
+            Debug.LogError("Unit always needs a Health script attached");
     } 
 
     protected override void Start()
@@ -504,7 +507,7 @@ public class Unit : Boid, LockStep
 
     void FindNewTargetEnemy()
     {
-        FInt shortestDistance = FInt.Create(1000);
+        FInt shortestDistance = FlargeNumber;
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
             if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
