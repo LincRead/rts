@@ -278,6 +278,9 @@ public class Unit : Boid, LockStep
 
                 AddSteeringForce(seek, FInt.FromParts(1, 0));
             }
+
+            else
+                currentState = UNIT_STATES.IDLE;
         }
 
         else if (parentSquad.leader != null)
@@ -403,7 +406,7 @@ public class Unit : Boid, LockStep
     {
         FPoint steer = FidleVelocity;
         FInt desiredSlowArea = FInt.FromParts(0, 500);
-        FInt dist = GetDistanceToUnit(parentSquad);
+        FInt dist = GetDistanceToFActor(parentSquad);
 
         steer = FPoint.VectorSubtract(targetPosition, Fpos);
 
@@ -439,7 +442,7 @@ public class Unit : Boid, LockStep
 
         for (int i = 0; i < actors.Count; i++)
         {
-            FInt dist = GetDistanceToUnit(actors[i]);
+            FInt dist = GetDistanceToFActor(actors[i]);
 
             if (dist > 0 && dist < desiredseparation)
             {
@@ -513,7 +516,7 @@ public class Unit : Boid, LockStep
             if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
                 continue;
 
-            FInt dist = GetDistanceToUnit(enemyActorsClose[i]);
+            FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
             if (dist < FInt.Create(3) && dist < shortestDistance)
             {
                 shortestDistance = dist;
@@ -539,7 +542,7 @@ public class Unit : Boid, LockStep
             }
 
             else if (parentSquad.leader.currentState != UNIT_STATES.MOVE
-                && (currentState != UNIT_STATES.ATTACKING || GetDistanceToUnit(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
+                && (currentState != UNIT_STATES.ATTACKING || GetDistanceToFActor(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
             {
                 currentState = UNIT_STATES.CHASING;
             }
@@ -575,17 +578,6 @@ public class Unit : Boid, LockStep
         Invoke("Destroy", 1.5f); // TODO: get death anim duration
         
         // Trigger Kill animation
-    }
-
-    FInt GetDistanceToUnit(FActor unit)
-    {
-        if (unit == null) return FInt.Create(1000);
-        return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
-    }
-
-    FInt GetDistanceBetweenPoints(FPoint a, FPoint b)
-    {
-        return ((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y));
     }
 
     void OnDrawGizmos()

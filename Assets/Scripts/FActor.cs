@@ -52,6 +52,17 @@ public class FActor : MonoBehaviour, LockStep
         return new Vector3(Fpos.X.ToFloat(), Fpos.Y.ToFloat(), z);
     }
 
+    public FInt GetDistanceToFActor(FActor actor)
+    {
+        if (actor == null) return FInt.Create(1000);
+        return ((actor.GetFPosition().X - Fpos.X) * (actor.GetFPosition().X - Fpos.X)) + ((actor.GetFPosition().Y - Fpos.Y) * (actor.GetFPosition().Y - Fpos.Y));
+    }
+
+    public FInt GetDistanceBetweenPoints(FPoint a, FPoint b)
+    {
+        return ((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y));
+    }
+
     public void SetFPosition(FPoint FposNew) { Fpos = FposNew; }
     public FPoint GetFPosition() { return Fpos; }
     public FPoint GetFVelocity() { return Fvelocity; }

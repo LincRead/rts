@@ -179,7 +179,7 @@ public class Squad : Boid, LockStep {
         // Find unit closest to target
         for (int i = 0; i < units.Count; i++)
         {
-            FInt dist = FindDistanceToUnit(units[i]);
+            FInt dist = GetDistanceToFActor(units[i]);
             if (dist < closetDistUnitToTarget)
             {
                 closetDistUnitToTarget = dist;
@@ -210,11 +210,6 @@ public class Squad : Boid, LockStep {
     }
 
     public void RemoveUnit(Unit unitToRemove) { units.Remove(unitToRemove); }
-
-    FInt FindDistanceToUnit(FActor unit)
-    {
-        return ((unit.GetFPosition().X - Fpos.X) * (unit.GetFPosition().X - Fpos.X)) + ((unit.GetFPosition().Y - Fpos.Y) * (unit.GetFPosition().Y - Fpos.Y));
-    }
 
     public int GetSquadSize() { return units.Count; }
 
