@@ -80,7 +80,8 @@ public class Squad : Boid, LockStep {
         if (playerID == gameController.playerID 
             && (Input.GetMouseButtonUp(0) && gameController.IsValidSquadInput()))
         {
-            Node node = pathFinding.GetNodeFromPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Node node = pathFinding.GetNodeFromPoint(mousePosition);
 
             if (node.walkable)
             {
@@ -89,6 +90,24 @@ public class Squad : Boid, LockStep {
 
                 Fpos = node._FworldPosition;
                 CalculateClosestUnitToNode();
+
+                // Check if any units on target node belongs to an enemy unit
+                bool enemyIsStandingOnNode = false;
+                for(int i = 0; i < node.actorsStandingHere.Count; i++)
+                {
+                    if(node.actorsStandingHere[i].playerID != gameController.playerID)
+                    {
+                        enemyIsStandingOnNode = true;
+                        break;
+                    }
+                }
+
+                // Show type of action activated
+                ClickIndicator cind = GameObject.FindGameObjectWithTag("ClickIndicator").GetComponent<ClickIndicator>();
+                if (enemyIsStandingOnNode)
+                    cind.ActivateAttack(mousePosition);
+                else
+                    cind.ActivateMoveSprite(mousePosition);
 
                 if (closetDistUnitToTarget >= minDistClosestUnitToTarget)
                 {
