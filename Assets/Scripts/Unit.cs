@@ -377,6 +377,13 @@ public class Unit : Boid, LockStep
 
     protected void ExecuteMovement()
     {
+        // Other units can keep up with Leader
+        if(isLeader)
+        {
+            Fvelocity.X = Fvelocity.X * FInt.FromParts(0, 900);
+            Fvelocity.Y = Fvelocity.Y * FInt.FromParts(0, 800);
+        }
+
         Fpos.X += Fvelocity.X * moveSpeed;
         Fpos.Y += Fvelocity.Y * moveSpeed;
 
