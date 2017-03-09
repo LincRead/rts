@@ -7,6 +7,9 @@ public class CameraRTS : MonoBehaviour {
     public GameController gameController;
     public Grid grid;
 
+    float timeButtonDownBeforeScroll = 0.1f;
+    float timeSinceButtonDown = 0.0f;
+
     Vector2 oldMousePosition = Vector2.zero;
 
     private float rightBound;
@@ -43,20 +46,29 @@ public class CameraRTS : MonoBehaviour {
             
         }
 
-        else if (Input.GetMouseButton(0) && gameController.IsHoveringUI())
+        else if (Input.GetMouseButton(0) && !gameController.IsHoveringUI())
         {
-            Vector2 newMousePosition = Input.mousePosition;
+            timeSinceButtonDown += Time.deltaTime;
 
-            Vector3 newCameraPos = transform.position;
-            newCameraPos += transform.TransformDirection((Vector3)((oldMousePosition - newMousePosition) * 1f * Time.deltaTime));
-            newCameraPos.x = Mathf.Clamp(newCameraPos.x, leftBound, rightBound);
-            newCameraPos.y = Mathf.Clamp(newCameraPos.y, bottomBound, topBound);
-            transform.position = newCameraPos;
+            if (timeSinceButtonDown > timeButtonDownBeforeScroll)
+            {
+                Vector2 newMousePosition = Input.mousePosition;
 
-            if (oldMousePosition != newMousePosition)
+                Vector3 newCameraPos = transform.position;
+                newCameraPos += transform.TransformDirection((Vector3)((oldMousePosition - newMousePosition) * 1f * Time.deltaTime));
+                newCameraPos.x = Mathf.Clamp(newCameraPos.x, leftBound, rightBound);
+                newCameraPos.y = Mathf.Clamp(newCameraPos.y, bottomBound, topBound);
+                transform.position = newCameraPos;
+
                 movingCamera = true;
 
-            oldMousePosition = newMousePosition;
+                oldMousePosition = newMousePosition;
+            }
+
+            else
+            {
+                oldMousePosition = Input.mousePosition;
+            }
         }
 
         else
@@ -69,6 +81,7 @@ public class CameraRTS : MonoBehaviour {
     {
         oldMousePosition = Vector2.zero;
         movingCamera = false;
+        timeSinceButtonDown = 0.0f;
     }
 
     public bool IsMoving()

@@ -263,7 +263,7 @@ public class GameController : MonoBehaviour
 
     public bool IsValidSquadInput()
     {
-        return inputHoveringUI.IsHoveringUI() && !cameraRTS.IsMoving();
+        return !inputHoveringUI.IsHoveringUI() && !cameraRTS.IsMoving();
     }
 
     public static float GetTicksPerSecond()

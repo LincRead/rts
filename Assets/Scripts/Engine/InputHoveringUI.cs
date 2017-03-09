@@ -20,9 +20,9 @@ public class InputHoveringUI : MonoBehaviour {
         if (Input.GetMouseButtonDown(0))
         {
             if (EventSystem.current.IsPointerOverGameObject())
-                hoveringUI = false;
-            else
                 hoveringUI = true;
+            else
+                hoveringUI = false;
         }
     }
 

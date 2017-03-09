@@ -24,7 +24,7 @@ public class Squad : Boid, LockStep {
 
     protected SQUAD_STATES state = SQUAD_STATES.IDLE;
 
-    [Header("Units")]
+    [Header("Unit stats")]
     public int unitMaxHitpoints = 100;
     public int unitAttackDamage = 10;
     public float unitMoveSpeed = 0.4f;
