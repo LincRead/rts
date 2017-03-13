@@ -22,11 +22,11 @@ public class Health : MonoBehaviour {
 
     void Start () {
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
-            new Vector3(transform.position.x, transform.position.y + 0.6f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 0.4f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
 
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 0.9f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 0.65f, 0.0f), Quaternion.identity) as GameObject;
         regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
         regenIconInstanceSpriteRenderer.enabled = false;
@@ -41,7 +41,7 @@ public class Health : MonoBehaviour {
         if(maxHitpoints != 0)
         {
             float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
-            healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1.8f, 2.5f, 0.0f);
+            healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1f, 1.3f, 0.0f);
 
             if (scaleX <= 0.4f)
                 spriteRenderer.color = Color.red;

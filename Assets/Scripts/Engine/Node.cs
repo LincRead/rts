@@ -49,9 +49,8 @@ public class Node : IHeapItem<Node>
 
     public void CreateTile()
     {
-        GameObject node = GameObject.Instantiate(Resources.Load("Tiles/Grass Tile"), worldPosition, Quaternion.identity) as GameObject;
+        GameObject node = GameObject.Instantiate(Resources.Load("Tiles/Grass"), worldPosition, Quaternion.identity) as GameObject;
         node.transform.SetParent(grid.transform);
-
     }
 
     public int fCost

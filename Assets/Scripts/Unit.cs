@@ -321,6 +321,8 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
+        float scale = 1.0f;
+
         // Moving and merged with squad
         // Or is leader
         if (currentState == UNIT_STATES.MOVE)
@@ -329,12 +331,12 @@ public class Unit : Boid, LockStep
             {
                 if (parentSquad.faceDir == 1)
                 {
-                    transform.localScale = new Vector3(-.6f, .6f, 1f);
+                    transform.localScale = new Vector3(scale, scale, 1f);
                 }
 
                 else if (parentSquad.faceDir == -1)
                 {
-                    transform.localScale = new Vector3(.6f, .6f, 1f);
+                    transform.localScale = new Vector3(-scale, scale, 1f);
                 }
             }
 
@@ -343,12 +345,12 @@ public class Unit : Boid, LockStep
             {
                 if (Fpos.X < parentSquad.leader.GetFPosition().X)
                 {
-                    transform.localScale = new Vector3(-.6f, .6f, 1f);
+                    transform.localScale = new Vector3(scale, scale, 1f);
                 }
 
                 else if (Fpos.X > parentSquad.leader.GetFPosition().X)
                 {
-                    transform.localScale = new Vector3(.6f, .6f, 1f);
+                    transform.localScale = new Vector3(-scale, scale, 1f);
                 }
             }
         }
@@ -357,12 +359,12 @@ public class Unit : Boid, LockStep
         {
             if (Fpos.X < targetEnemy.GetFPosition().X)
             {
-                transform.localScale = new Vector3(-.6f, .6f, 1f);
+                transform.localScale = new Vector3(scale, scale, 1f);
             }
 
             else if (Fpos.X > targetEnemy.GetFPosition().X)
             {
-                transform.localScale = new Vector3(.6f, .6f, 1f);
+                transform.localScale = new Vector3(-scale, scale, 1f);
             }
         }
 
@@ -445,7 +447,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 300);
+        FInt desiredseparation = FInt.FromParts(0, 220);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
