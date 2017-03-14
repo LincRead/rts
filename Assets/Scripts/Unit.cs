@@ -232,7 +232,7 @@ public class Unit : Boid, LockStep
 
         // Find a way around friendly units
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
-        AddSteeringForce(avoidance, FInt.FromParts(0, 300));
+        AddSteeringForce(avoidance, FInt.FromParts(0, 200));
 
         // Desired velocity
         FdirectionVelocity = seek;
@@ -357,12 +357,12 @@ public class Unit : Boid, LockStep
 
         else if (targetEnemy != null)
         {
-            if (Fpos.X < targetEnemy.GetFPosition().X)
+            if (Fpos.X < (targetEnemy.GetFPosition().X - FboundingRadius) && FdirectionVelocity.X > 0)
             {
                 transform.localScale = new Vector3(scale, scale, 1f);
             }
 
-            else if (Fpos.X > targetEnemy.GetFPosition().X)
+            else if (Fpos.X > (targetEnemy.GetFPosition().X + FboundingRadius) && FdirectionVelocity.X < 0)
             {
                 transform.localScale = new Vector3(-scale, scale, 1f);
             }
@@ -388,6 +388,12 @@ public class Unit : Boid, LockStep
             Fvelocity.X = Fvelocity.X * FInt.FromParts(0, 900);
             Fvelocity.Y = Fvelocity.Y * FInt.FromParts(0, 800);
         }
+
+        FInt one = FInt.Create(1);
+        if (Fvelocity.X > one) Fvelocity.X = one;
+        if (Fvelocity.X < one * -1) Fvelocity.X = one * -1;
+        if (Fvelocity.Y > one) Fvelocity.Y = one;
+        if (Fvelocity.Y < one * -1) Fvelocity.Y = one * -1;
 
         Fpos.X += Fvelocity.X * moveSpeed;
         Fpos.Y += Fvelocity.Y * moveSpeed;
@@ -447,7 +453,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 220);
+        FInt desiredseparation = FInt.FromParts(0, 420);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
