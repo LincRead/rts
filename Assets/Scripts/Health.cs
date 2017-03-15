@@ -22,11 +22,11 @@ public class Health : MonoBehaviour {
 
     void Start () {
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
-            new Vector3(transform.position.x, transform.position.y + 0.4f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 1.05f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
 
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 0.65f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 1.3f, 0.0f), Quaternion.identity) as GameObject;
         regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
         regenIconInstanceSpriteRenderer.enabled = false;

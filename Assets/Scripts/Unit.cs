@@ -228,11 +228,11 @@ public class Unit : Boid, LockStep
 
         // Steer away from friendly units
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
-        AddSteeringForce(seperation, FInt.FromParts(1, 0));
+        AddSteeringForce(seperation, FInt.FromParts(0, 700));
 
         // Find a way around friendly units
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
-        AddSteeringForce(avoidance, FInt.FromParts(0, 200));
+        //AddSteeringForce(avoidance, FInt.FromParts(0, 50));
 
         // Desired velocity
         FdirectionVelocity = seek;
@@ -321,7 +321,7 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
-        float scale = 1.0f;
+        float scale = 0.8f;
 
         // Moving and merged with squad
         // Or is leader
@@ -453,7 +453,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 420);
+        FInt desiredseparation = FInt.FromParts(0, 370);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
