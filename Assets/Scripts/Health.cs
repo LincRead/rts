@@ -22,11 +22,11 @@ public class Health : MonoBehaviour {
 
     void Start () {
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
-            new Vector3(transform.position.x, transform.position.y + 1.05f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 0.85f, 0.0f), Quaternion.identity) as GameObject;
         healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
 
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 1.3f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 1.1f, 0.0f), Quaternion.identity) as GameObject;
         regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
         regenIconInstanceSpriteRenderer.enabled = false;
@@ -72,7 +72,11 @@ public class Health : MonoBehaviour {
         hitpoints += FregeneratePerTick;
 
         if (hitpoints > maxHitpoints)
+        {
             hitpoints = maxHitpoints;
+            spriteRenderer.enabled = false;
+        } else // Don't show if full HP
+            spriteRenderer.enabled = true;
 
         regenIconInstanceSpriteRenderer.enabled = false;
     }
@@ -84,14 +88,18 @@ public class Health : MonoBehaviour {
 
         hitpoints += FregeneratePerTick * FfastRegenerateMultiplier;
 
-        if (hitpoints > maxHitpoints)
+        if (hitpoints >= maxHitpoints)
         {
             hitpoints = maxHitpoints;
             regenIconInstanceSpriteRenderer.enabled = false;
+            spriteRenderer.enabled = false;
         }
 
         else
+        {
+            spriteRenderer.enabled = true;
             regenIconInstanceSpriteRenderer.enabled = true;
+        }
     }
 
     public void ChangeHitpoints(int value)

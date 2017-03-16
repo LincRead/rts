@@ -102,8 +102,6 @@ public class Unit : Boid, LockStep
             else
                 spriteRenderer.color = Color.magenta;
         }
-        else if (currentState == UNIT_STATES.ATTACKING && playerID == 0)
-            spriteRenderer.color = Color.green;
         else if (playerID == 1)
             spriteRenderer.color = Color.blue;
         else
@@ -211,6 +209,9 @@ public class Unit : Boid, LockStep
             case UNIT_STATES.ATTACKING: HandleAttacking(); break;
             case UNIT_STATES.DYING: HandleDying(); break;
         }
+
+        if(currentState != UNIT_STATES.ATTACKING)
+            animator.SetBool("attacking", false);
     }
 
     void HandleIdling()
@@ -552,8 +553,12 @@ public class Unit : Boid, LockStep
             {
                 // Reset timer before first blow
                 if(currentState != UNIT_STATES.ATTACKING)
+                {
                     ticksSinceLastAttack = 0;
-
+                    animator.SetBool("attacking", true);
+                    animator.Play("Attack");
+                }
+                    
                 currentState = UNIT_STATES.ATTACKING;
             }
 

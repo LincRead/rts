@@ -4,8 +4,9 @@ using System.Collections;
 public class CameraRTS : MonoBehaviour {
 
     public float scrollSpeed = 1f;
-    public GameController gameController;
-    public Grid grid;
+    GameController gameController;
+    Grid grid;
+    ClickIndicator clickIndicator;
 
     float timeButtonDownBeforeScroll = 0.1f;
     float timeSinceButtonDown = 0.0f;
@@ -23,6 +24,7 @@ public class CameraRTS : MonoBehaviour {
     void Start() {
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
+        clickIndicator = GameObject.FindGameObjectWithTag("ClickIndicator").GetComponent<ClickIndicator>(); ;
 
         float vertExtent = Camera.main.orthographicSize;
         float horzExtent = vertExtent * Screen.width / Screen.height;
@@ -43,7 +45,8 @@ public class CameraRTS : MonoBehaviour {
 
         else if (Input.GetMouseButtonUp(0))
         {
-            
+            if(movingCamera)
+                clickIndicator.DeactivateMoveCamera();
         }
 
         else if (Input.GetMouseButton(0) && !gameController.IsHoveringUI())
@@ -61,6 +64,8 @@ public class CameraRTS : MonoBehaviour {
                 transform.position = newCameraPos;
 
                 movingCamera = true;
+
+                clickIndicator.ActivateMoveCamera();
 
                 oldMousePosition = newMousePosition;
             }

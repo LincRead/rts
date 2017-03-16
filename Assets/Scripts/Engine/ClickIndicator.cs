@@ -8,6 +8,7 @@ public class ClickIndicator : MonoBehaviour {
 
     public Sprite attackSprite;
     public Sprite moveSprite;
+    public Sprite moveCameraSprite;
 
     SpriteRenderer spriteRenderer;
 
@@ -31,17 +32,17 @@ public class ClickIndicator : MonoBehaviour {
 
     public void ActivateAttack(Vector2 pos)
     {
-        Activate(pos);
+        ActivateBounceEffect(pos);
         spriteRenderer.sprite = attackSprite;
     }
 
     public void ActivateMoveSprite(Vector2 pos)
     {
-        Activate(pos);
+        ActivateBounceEffect(pos);
         spriteRenderer.sprite = moveSprite;
     }
 
-    void Activate(Vector2 pos)
+    void ActivateBounceEffect(Vector2 pos)
     {
         transform.position = pos;
         spriteRenderer.enabled = true;
@@ -49,5 +50,19 @@ public class ClickIndicator : MonoBehaviour {
 
         LeanTween.scale(gameObject, new Vector3(0.75f, 0.75f, 1.0f), 0.25f);
         LeanTween.scale(gameObject, new Vector3(1.0f, 1.0f, 1.0f), 0.25f).setDelay(0.25f);
+    }
+
+    public void ActivateMoveCamera()
+    {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        transform.position = mousePos;
+        spriteRenderer.enabled = true;
+        spriteRenderer.sprite = moveCameraSprite;
+        timeSinceActionActivated = 0.0f;
+    }
+
+    public void DeactivateMoveCamera()
+    {
+        spriteRenderer.enabled = false;
     }
 }
