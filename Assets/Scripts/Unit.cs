@@ -233,7 +233,7 @@ public class Unit : Boid, LockStep
 
         // Find a way around friendly units
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
-        //AddSteeringForce(avoidance, FInt.FromParts(0, 50));
+        AddSteeringForce(avoidance, FInt.FromParts(0, 200));
 
         // Desired velocity
         FdirectionVelocity = seek;
@@ -531,7 +531,12 @@ public class Unit : Boid, LockStep
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
             if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
+            {
+                if (targetEnemy == enemyActorsClose[i])
+                    targetEnemy = null;
+
                 continue;
+            }
 
             FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
             if (dist < FInt.Create(3) && dist < shortestDistance)
@@ -595,6 +600,10 @@ public class Unit : Boid, LockStep
 
         if (isLeader)
             parentSquad.FindNewLeader();
+
+        pathFinding.RemoveStandingOnNode();
+
+        health.Destroy();
 
         Invoke("Destroy", 1.5f); // TODO: get death anim duration
         

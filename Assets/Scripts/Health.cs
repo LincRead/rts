@@ -3,12 +3,24 @@ using System.Collections;
 
 public class Health : MonoBehaviour {
 
+    public GameObject healthBarOutlinePrefab;
     public GameObject healthBarPrefab;
     public GameObject regenIconPrefab;
 
+    GameObject healthBarOutlineInstance;
     GameObject healthBarInstance;
     GameObject regenIconInstance;
     SpriteRenderer regenIconInstanceSpriteRenderer;
+
+    SpriteRenderer healthBarSpriteRenderer;
+    SpriteRenderer healthBarOutlineSpriteRenderer;
+
+    Transform healthBarTransform;
+    Transform healthBarOutlineTransform;
+
+    float healthBarDefaultWidth = 0.0f;
+
+    public float offsetY = 0.0f;
 
     public float regeneratePerSecond = 2f;
     public float fastRegenerateMultiplier = 3f;
@@ -21,41 +33,61 @@ public class Health : MonoBehaviour {
     FInt FfastRegenerateMultiplier;
 
     void Start () {
+        healthBarOutlineInstance = GameObject.Instantiate(healthBarOutlinePrefab,
+            transform.position, Quaternion.identity) as GameObject;
+
         healthBarInstance = GameObject.Instantiate(healthBarPrefab,
-            new Vector3(transform.position.x, transform.position.y + 0.85f, 0.0f), Quaternion.identity) as GameObject;
-        healthBarInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
+            transform.position, Quaternion.identity) as GameObject;
+
+        healthBarSpriteRenderer = healthBarInstance.GetComponent<SpriteRenderer>();
+        healthBarSpriteRenderer.enabled = false;
+        healthBarSpriteRenderer.sortingOrder = 1;
+
+        healthBarOutlineSpriteRenderer = healthBarOutlineInstance.GetComponent<SpriteRenderer>();
+        healthBarOutlineSpriteRenderer.enabled = false;
+
+        healthBarTransform = healthBarInstance.GetComponent<Transform>();
+        healthBarOutlineTransform = healthBarOutlineInstance.GetComponent<Transform>();
+
+        healthBarDefaultWidth = healthBarSpriteRenderer.bounds.size.x;
 
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 1.1f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + 1.2f, 0.0f), Quaternion.identity) as GameObject;
         regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
         regenIconInstanceSpriteRenderer.enabled = false;
 
-        spriteRenderer = healthBarInstance.GetComponent<SpriteRenderer>();
+        spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+
         FregeneratePerTick = FInt.FromFloat((regeneratePerSecond / 20));
         FfastRegenerateMultiplier = FInt.FromFloat(fastRegenerateMultiplier);
     }
 
+    public float health;
     void Update()
     {
-        if(maxHitpoints != 0)
+        health = hitpoints.ToFloat();
+
+        if(maxHitpoints != 0 && healthBarTransform != null)
         {
             float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
-            healthBarInstance.GetComponent<Transform>().localScale = new Vector3(scaleX * 1f, 1.3f, 0.0f);
+            healthBarTransform.localScale = new Vector3(scaleX * 1f, 1.0f, 0.0f);
 
-            if (scaleX <= 0.4f)
-                spriteRenderer.color = Color.red;
-            else if (scaleX < 0.6f)
-                spriteRenderer.color = new Color(1.0f, 0.7f, 0.0f);
+            healthBarOutlineTransform.position = new Vector3(transform.position.x, transform.position.y + spriteRenderer.bounds.size.y + offsetY, transform.position.z);
+
+            healthBarTransform.position = new Vector3(
+                healthBarOutlineTransform.position.x - (((healthBarDefaultWidth / 2) * (1 - scaleX))),
+                healthBarOutlineTransform.position.y,
+                healthBarOutlineTransform.position.z);
+
+            if (scaleX <= 0.5f)
+                healthBarSpriteRenderer.color = Color.red;
+            else if (scaleX < 0.65f)
+                healthBarSpriteRenderer.color = new Color(1.0f, 0.7f, 0.0f);
             else if (scaleX < 0.8f)
-                spriteRenderer.color = Color.yellow;
+                healthBarSpriteRenderer.color = Color.yellow;
             else
-                spriteRenderer.color = Color.green;
-        }
-
-        else
-        {
-            Debug.LogError("Max health can't be set to 0 for Health script");
+                healthBarSpriteRenderer.color = Color.green;
         }
     }
 
@@ -69,16 +101,18 @@ public class Health : MonoBehaviour {
         if (hitpoints == zeroHitpoints)
             return;
 
-        hitpoints += FregeneratePerTick;
+        ChangeHitpoints((int)(FregeneratePerTick).ToFloat());
 
-        if (hitpoints > maxHitpoints)
+        if (hitpoints >= maxHitpoints)
         {
             hitpoints = maxHitpoints;
-            spriteRenderer.enabled = false;
-        } else // Don't show if full HP
-            spriteRenderer.enabled = true;
+            regenIconInstanceSpriteRenderer.enabled = false;
+        }
 
-        regenIconInstanceSpriteRenderer.enabled = false;
+        else
+        {
+            //regenIconInstanceSpriteRenderer.enabled = true;
+        }
     }
 
     public void FastRegenerate()
@@ -86,28 +120,44 @@ public class Health : MonoBehaviour {
         if (hitpoints == zeroHitpoints)
             return;
 
-        hitpoints += FregeneratePerTick * FfastRegenerateMultiplier;
+        ChangeHitpoints((int)(FregeneratePerTick * FfastRegenerateMultiplier).ToFloat());
 
         if (hitpoints >= maxHitpoints)
         {
             hitpoints = maxHitpoints;
             regenIconInstanceSpriteRenderer.enabled = false;
-            spriteRenderer.enabled = false;
         }
 
         else
         {
-            spriteRenderer.enabled = true;
-            regenIconInstanceSpriteRenderer.enabled = true;
+           // regenIconInstanceSpriteRenderer.enabled = true;
         }
     }
 
     public void ChangeHitpoints(int value)
     {
-        hitpoints += value;
+        Debug.Log(value);
+
+        if (hitpoints <= 0)
+            return; // Already dead
+
+        hitpoints += FInt.Create(value);
 
         if (hitpoints < zeroHitpoints)
             hitpoints = zeroHitpoints;
+
+        if(hitpoints < maxHitpoints)
+        {
+            healthBarSpriteRenderer.enabled = true;
+            healthBarOutlineSpriteRenderer.enabled = true;
+        }
+
+        else
+        {
+            healthBarSpriteRenderer.enabled = false;
+            healthBarOutlineSpriteRenderer.enabled = false;
+        }
+
     }
 
     public void SetMaxHitpoints(int maxHP) {
@@ -124,5 +174,12 @@ public class Health : MonoBehaviour {
 
     public bool IsHitpointsZero() {
         return hitpoints == zeroHitpoints;
+    }
+
+    public void Destroy()
+    {
+        Destroy(healthBarInstance.gameObject);
+        Destroy(healthBarOutlineInstance.gameObject);
+        Destroy(regenIconInstance.gameObject);
     }
 }

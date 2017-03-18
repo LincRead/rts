@@ -42,8 +42,7 @@ public class Pathfinding : MonoBehaviour {
             // Clear the previous node this controller was standing on
             if (currentStandingOnNode != null)
             {
-                currentStandingOnNode.actorsStandingHere.Remove(parentReference);
-                currentStandingOnNode.squadStandingHere = false;
+                RemoveStandingOnNode();
             }
 
             // Store the node this controller is currently standing on
@@ -147,5 +146,13 @@ public class Pathfinding : MonoBehaviour {
         if (distX > distY)
             return 14 * distY + 10 * (distX - distY);
         return 14 * distX + 10 * (distY - distX);
+    }
+    
+    public void RemoveStandingOnNode()
+    {
+        currentStandingOnNode.actorsStandingHere.Remove(parentReference);
+
+        if (currentStandingOnNode.actorsStandingHere.Count == 0)
+            currentStandingOnNode.squadStandingHere = false;
     }
 }
