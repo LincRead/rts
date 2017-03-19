@@ -53,10 +53,10 @@ public class CameraRTS : MonoBehaviour {
         {
             timeSinceButtonDown += Time.deltaTime;
 
-            if (timeSinceButtonDown > timeButtonDownBeforeScroll)
-            {
-                Vector2 newMousePosition = Input.mousePosition;
+            Vector2 newMousePosition = Input.mousePosition;
 
+            if (timeSinceButtonDown > timeButtonDownBeforeScroll || newMousePosition != oldMousePosition)
+            {
                 Vector3 newCameraPos = transform.position;
                 newCameraPos += transform.TransformDirection((Vector3)((oldMousePosition - newMousePosition) * 1f * Time.deltaTime));
                 newCameraPos.x = Mathf.Clamp(newCameraPos.x, leftBound, rightBound);
