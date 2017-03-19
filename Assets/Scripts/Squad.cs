@@ -28,7 +28,6 @@ public class Squad : Boid, LockStep {
     public int unitMaxHitpoints = 100;
     public int unitAttackDamage = 10;
     public float unitMoveSpeed = 0.4f;
-    public float unitHealthRegenerateSpeed = 0.05f;
     List<Unit> units = new List<Unit>(30);
 
     // Find closest target and set as leader of squad

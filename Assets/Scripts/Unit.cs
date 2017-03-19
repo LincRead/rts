@@ -131,10 +131,11 @@ public class Unit : Boid, LockStep
         base.LockStepUpdate();
 
         // Update health
-        if(isCloseToHQ())
-            health.FastRegenerate();
-        else
+        if ((currentState == UNIT_STATES.IDLE || currentState == UNIT_STATES.MOVE)
+            && isCloseToHQ())
             health.Regenerate();
+        else
+            health.ToggleOffRegenerateSymbol();
 
         // Reset interpolation
         currentLerpTime = 0.0f;

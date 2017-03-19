@@ -12,25 +12,24 @@ public class Health : MonoBehaviour {
     GameObject regenIconInstance;
     SpriteRenderer regenIconInstanceSpriteRenderer;
 
+    SpriteRenderer spriteRenderer;
     SpriteRenderer healthBarSpriteRenderer;
     SpriteRenderer healthBarOutlineSpriteRenderer;
 
     Transform healthBarTransform;
     Transform healthBarOutlineTransform;
+    Transform regenIconTransform;
 
     float healthBarDefaultWidth = 0.0f;
 
     public float offsetY = 0.0f;
 
-    public float regeneratePerSecond = 2f;
-    public float fastRegenerateMultiplier = 3f;
+    public int regeneratePerSecond = 2;
+    int ticksSinceRegenerate = 0;
 
-    SpriteRenderer spriteRenderer;
     FInt maxHitpoints = FInt.Create(0);
     FInt hitpoints = FInt.Create(0);
     FInt zeroHitpoints = FInt.Create(0);
-    FInt FregeneratePerTick;
-    FInt FfastRegenerateMultiplier;
 
     void Start () {
         healthBarOutlineInstance = GameObject.Instantiate(healthBarOutlinePrefab,
@@ -51,16 +50,19 @@ public class Health : MonoBehaviour {
 
         healthBarDefaultWidth = healthBarSpriteRenderer.bounds.size.x;
 
+        // Set up health regen icon
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 1.2f, 0.0f), Quaternion.identity) as GameObject;
-        regenIconInstance.GetComponent<Transform>().SetParent(gameObject.GetComponent<Transform>());
+            new Vector3(transform.position.x, transform.position.y + 1.25f, 0.0f), Quaternion.identity) as GameObject;
+        regenIconTransform = regenIconInstance.GetComponent<Transform>();
+        regenIconTransform.SetParent(gameObject.GetComponent<Transform>());
+        regenIconTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+        LeanTween.scale(regenIconInstance.gameObject, new Vector3(1.3f, 1.3f, 1.0f), 0.35f).setLoopPingPong();
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
         regenIconInstanceSpriteRenderer.enabled = false;
 
+        // Mics
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-
-        FregeneratePerTick = FInt.FromFloat((regeneratePerSecond / 20));
-        FfastRegenerateMultiplier = FInt.FromFloat(fastRegenerateMultiplier);
     }
 
     public float health;
@@ -91,53 +93,39 @@ public class Health : MonoBehaviour {
         }
     }
 
-    public void RegenerateNothing()
+    public void Regenerate()
+    {
+        ticksSinceRegenerate++;
+
+        if(ticksSinceRegenerate == 20)
+        {
+            ticksSinceRegenerate = 0;
+
+            if (hitpoints == zeroHitpoints)
+                return;
+
+            ChangeHitpoints(regeneratePerSecond);
+        }
+
+        if (hitpoints >= maxHitpoints)
+        {
+            hitpoints = maxHitpoints;
+            ToggleOffRegenerateSymbol();
+        }
+
+        else
+        {
+            regenIconInstanceSpriteRenderer.enabled = true;
+        }
+    }
+
+    public void ToggleOffRegenerateSymbol()
     {
         regenIconInstanceSpriteRenderer.enabled = false;
     }
 
-    public void Regenerate()
-    {
-        if (hitpoints == zeroHitpoints)
-            return;
-
-        ChangeHitpoints((int)(FregeneratePerTick).ToFloat());
-
-        if (hitpoints >= maxHitpoints)
-        {
-            hitpoints = maxHitpoints;
-            regenIconInstanceSpriteRenderer.enabled = false;
-        }
-
-        else
-        {
-            //regenIconInstanceSpriteRenderer.enabled = true;
-        }
-    }
-
-    public void FastRegenerate()
-    {
-        if (hitpoints == zeroHitpoints)
-            return;
-
-        ChangeHitpoints((int)(FregeneratePerTick * FfastRegenerateMultiplier).ToFloat());
-
-        if (hitpoints >= maxHitpoints)
-        {
-            hitpoints = maxHitpoints;
-            regenIconInstanceSpriteRenderer.enabled = false;
-        }
-
-        else
-        {
-           // regenIconInstanceSpriteRenderer.enabled = true;
-        }
-    }
-
     public void ChangeHitpoints(int value)
     {
-        Debug.Log(value);
-
         if (hitpoints <= 0)
             return; // Already dead
 
