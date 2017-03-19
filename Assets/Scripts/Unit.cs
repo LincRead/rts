@@ -92,7 +92,7 @@ public class Unit : Boid, LockStep
     }
 
     float currentLerpTime = 0.0f;
-    float lerpTime = .26f;
+    float lerpTime = 0.3f;
     void SmoothMovement()
     {
         currentLerpTime += Time.deltaTime;
