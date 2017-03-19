@@ -64,6 +64,12 @@ public class Pathfinding : MonoBehaviour {
         return grid.GetNodeFromGridPos(x, y);
     }
 
+
+    public List<Node> FindPath(Node endNode)
+    {
+        return FindPath(endNode.worldPosition);
+    }
+
     public List<Node> FindPath(Vector2 endPos)
     {
         // Find start and destination nodes

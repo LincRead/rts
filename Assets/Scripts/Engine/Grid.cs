@@ -77,8 +77,8 @@ public class Grid : MonoBehaviour
                 bool walkable = true;
 
                 if (Physics2D.OverlapArea(
-                    new Vector2(worldPoint.x - nodeRadius + 1, worldPoint.y + nodeRadius - 1),
-                    new Vector2(worldPoint.x + nodeRadius - 1, worldPoint.y - nodeRadius + 1),
+                    new Vector2(worldPoint.x - nodeRadius, worldPoint.y + nodeRadius),
+                    new Vector2(worldPoint.x + nodeRadius, worldPoint.y - nodeRadius),
                     unwalkableMask))
                     walkable = false;
 

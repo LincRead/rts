@@ -91,25 +91,8 @@ public class Unit : Boid, LockStep
         SmoothMovement();
     }
 
-    void DebugStateWithColor()
-    {
-        if (IsDead())
-            spriteRenderer.color = Color.black;
-        else if (isLeader)
-        {
-            if (playerID == 0)
-                spriteRenderer.color = Color.red;
-            else
-                spriteRenderer.color = Color.magenta;
-        }
-        else if (playerID == 1)
-            spriteRenderer.color = Color.blue;
-        else
-            spriteRenderer.color = Color.white;
-    }
-
     float currentLerpTime = 0.0f;
-    float lerpTime = 1;
+    float lerpTime = .26f;
     void SmoothMovement()
     {
         currentLerpTime += Time.deltaTime;
@@ -174,32 +157,6 @@ public class Unit : Boid, LockStep
         Invoke("CanFindNewTarget", 1f); // Todo lockstep
     }
 
-    void FindCloseUnits()
-    {
-        if (currentStandingNode == null)
-            return;
-
-        friendlyActorsClose.Clear();
-        enemyActorsClose.Clear();
-
-        neighbours = grid.GetNeighbours(currentStandingNode);
-        neighbours.Add(currentStandingNode);
-
-        for (int n = 0; n < neighbours.Count; n++)
-        {
-            for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
-            {
-                if (neighbours[n].actorsStandingHere[i])
-                {
-                    if (neighbours[n].actorsStandingHere[i].playerID == playerID)
-                        friendlyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
-                    else
-                        enemyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
-                }
-            }
-        }
-    }
-
     void HandleCurrentState()
     {
         switch (currentState)
@@ -261,44 +218,60 @@ public class Unit : Boid, LockStep
     void HandleMovingToTarget()
     {
         Fvelocity = FidleVelocity;
-
+        List<Node> newPath;
         FPoint seek = FidleVelocity;
+        Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
+        Unit leader = parentSquad.leader;
 
-        if (isLeader)
+        int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - leader.GetCurrentNode().gridPosX;
+        int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - leader.GetCurrentNode().gridPosY;
+
+        if (nodeOffsetFromLeaderNodeX < -3) nodeOffsetFromLeaderNodeX = -3;
+        if (nodeOffsetFromLeaderNodeX > 3) nodeOffsetFromLeaderNodeX = 3;
+
+        if (nodeOffsetFromLeaderNodeY < -3) nodeOffsetFromLeaderNodeY = -3;
+        if (nodeOffsetFromLeaderNodeY > 3) nodeOffsetFromLeaderNodeY = 3;
+
+        Node myTargetNode = pathFinding.GetNodeFromGridPos(
+            leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
+            leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
+
+        if (myTargetNode.walkable)
+            newPath = pathFinding.FindPath(myTargetNode);
+        else
+            newPath = pathFinding.FindPath(leaderTargetNode);
+
+        if (newPath != null)
+            path = newPath;
+
+        if (path != null && path.Count > 0)
         {
-            List<Node> newPath = pathFinding.FindPath(parentSquad.GetRealPosToVector3());
+            if (GetDistanceBetweenPoints(path[0]._FworldPosition, GetFPosition()) < FInt.FromParts(0, 500))
+                path.RemoveAt(0);
 
-            if (newPath != null)
-                path = newPath;
-
-            if (path != null && path.Count > 0)
-            {
-                if (GetDistanceBetweenPoints(path[0]._FworldPosition, GetFPosition()) < FInt.FromParts(0, 500))
-                    path.RemoveAt(0);
-
-                if (path.Count > 0)
-                    seek = ComputeSeek(path[0]._FworldPosition, true);
-            }
-
-            else
-                seek = ComputeSeek(parentSquad.GetFPosition(), true);
-
-            AddSteeringForce(seek, FInt.FromParts(1, 0));
+            if (path.Count > 0)
+                seek = ComputeSeek(path[0]._FworldPosition, true);
         }
 
-        else if (parentSquad.leader != null)
-        {
-            seek = ComputeSeek(parentSquad.leader, false);
-            AddSteeringForce(seek, FInt.FromParts(1, 0));
-        }
+        else
+            seek = ComputeSeek(parentSquad.GetFPosition(), true);
 
         // Desired velocity
         FdirectionVelocity = seek;
-
-        if (!isLeader)
+        if(!isLeader)
         {
+            AddSteeringForce(seek, FInt.FromParts(0, 800));
+
+            FPoint seekLeader = ComputeSeek(parentSquad.leader, false);
+            AddSteeringForce(seekLeader, FInt.FromParts(0, 200));
+
             FPoint seperation = ComputeSeperation(friendlyActorsClose);
-            AddSteeringForce(seperation, FInt.FromParts(0, 600));
+            AddSteeringForce(seperation, FInt.FromParts(0, 700));
+        }
+
+        else
+        {
+            AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
         if(!canFindNewTarget)
@@ -387,8 +360,8 @@ public class Unit : Boid, LockStep
         // Other units can keep up with Leader
         if(isLeader)
         {
-            Fvelocity.X = Fvelocity.X * FInt.FromParts(0, 900);
-            Fvelocity.Y = Fvelocity.Y * FInt.FromParts(0, 800);
+            Fvelocity.X = Fvelocity.X * FInt.FromParts(0, 600);
+            Fvelocity.Y = Fvelocity.Y * FInt.FromParts(0, 600);
         }
 
         FInt one = FInt.Create(1);
@@ -423,7 +396,7 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeek(FPoint targetPosition, bool slowDown)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredSlowArea = FInt.FromParts(0, 200);
+        FInt desiredSlowArea = FInt.FromParts(0, 270);
         FInt dist = GetDistanceToFActor(parentSquad);
 
         steer = FPoint.VectorSubtract(targetPosition, Fpos);
@@ -452,10 +425,44 @@ public class Unit : Boid, LockStep
         return steer;
     }
 
+    protected FPoint ComputeCohesion(List<FActor> actors)
+    {
+        FPoint steer = FidleVelocity;
+        int neighborCount = 0;
+        FInt posx = FInt.Create(0);
+        FInt posy = FInt.Create(0);
+
+        for (int i = 0; i < actors.Count; i++)
+        {
+            posx += actors[i].GetComponent<Unit>().Fpos.X;
+            posy += actors[i].GetComponent<Unit>().Fpos.Y;
+            FInt dist = GetDistanceToFActor(actors[i]);
+            neighborCount++;
+        }
+
+        if (neighborCount > 0)
+        {
+            FInt averageX = posx / neighborCount;
+            FInt averageY = posy / neighborCount;
+            FPoint average = FPoint.Create(averageX, averageY);
+
+            steer = FPoint.VectorSubtract(average, Fpos);
+        }
+
+        if (steer.X != 0 || steer.Y != 0)
+        {
+            steer = FPoint.Normalize(steer);
+            steer = FPoint.VectorMultiply(steer, moveSpeed);
+            steer = FPoint.VectorSubtract(steer, Fvelocity);
+        }
+
+        return steer;
+    }
+
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 370);
+        FInt desiredseparation = FInt.FromParts(0, 270);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
@@ -497,11 +504,11 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeObstacleAvoidance(List<FActor> actors)
     {
         FaheadFull = FPoint.Normalize(Fvelocity);
-        FaheadFull = FPoint.VectorMultiply(FaheadFull, FInt.FromParts(1, 0));
+        FaheadFull = FPoint.VectorMultiply(FaheadFull, FInt.FromParts(0, 500));
         FaheadFull = FPoint.VectorAdd(FaheadFull, GetFPosition());
 
         FaheadHalf = FPoint.Normalize(Fvelocity);
-        FaheadHalf = FPoint.VectorMultiply(FaheadHalf, FInt.FromParts(0, 500));
+        FaheadHalf = FPoint.VectorMultiply(FaheadHalf, FInt.FromParts(0, 250));
         FaheadHalf = FPoint.VectorAdd(FaheadHalf, GetFPosition());
 
         FPoint steer = FidleVelocity;
@@ -519,7 +526,7 @@ public class Unit : Boid, LockStep
         if (steer.X != 0 || steer.Y != 0)
         {
             steer = FPoint.Normalize(steer);
-            steer = FPoint.VectorMultiply(steer, moveSpeed);
+            steer = FPoint.VectorMultiply(steer, FInt.FromParts(0, 300));
             steer = FPoint.VectorSubtract(steer, Fvelocity);
         }
 
@@ -611,10 +618,53 @@ public class Unit : Boid, LockStep
         // Trigger Kill animation
     }
 
+    void FindCloseUnits()
+    {
+        if (currentStandingNode == null)
+            return;
+
+        friendlyActorsClose.Clear();
+        enemyActorsClose.Clear();
+
+        neighbours = grid.GetNeighbours(currentStandingNode);
+        neighbours.Add(currentStandingNode);
+
+        for (int n = 0; n < neighbours.Count; n++)
+        {
+            for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
+            {
+                if (neighbours[n].actorsStandingHere[i])
+                {
+                    if (neighbours[n].actorsStandingHere[i].playerID == playerID)
+                        friendlyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
+                    else
+                        enemyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
+                }
+            }
+        }
+    }
+
     void OnDrawGizmos()
     {
         Gizmos.color = new Color(0.5f, 0.2f, 1.0f, 0.8f);
         Gizmos.DrawWireSphere(GetRealPosToVector3(), boundingRadius);
+    }
+
+    void DebugStateWithColor()
+    {
+        if (IsDead())
+            spriteRenderer.color = Color.black;
+        else if (isLeader)
+        {
+            if (playerID == 0)
+                spriteRenderer.color = Color.red;
+            else
+                spriteRenderer.color = Color.magenta;
+        }
+        else if (playerID == 1)
+            spriteRenderer.color = Color.blue;
+        else
+            spriteRenderer.color = Color.white;
     }
 
     bool isCloseToHQ()
@@ -628,5 +678,7 @@ public class Unit : Boid, LockStep
 
     public void CancelMergingWithSquad() { mergingWithSquad = false; }
 
-    public bool IsMergingWithSquad() {return mergingWithSquad;  }
+    public bool IsMergingWithSquad() { return mergingWithSquad;  }
+
+    public Node GetCurrentNode() { return pathFinding.currentStandingOnNode;  }
 }

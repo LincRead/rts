@@ -19,12 +19,12 @@ public class GameController : MonoBehaviour
     // Turn
     List<Turn> turns = new List<Turn>();
     int currentTurn = 0;
-    float timeBetweenTurns = .5f;
-    float timeSinceLastTurn = 0.0f;
+    float timeBetweenTurns = .2f;
+    float ticksSinceLastCommunicationTurn = 0.0f;
 
     // Gameplay tick
     public static float timeBetweenGameplayTicks = .05f;
-    float timeSinceLastGameplayTick = 0.0f;
+    float timeSinceLastGameplayTick = 0.1f;
 
     // Command
     MessageCommand commandToSend = null;
@@ -82,21 +82,16 @@ public class GameController : MonoBehaviour
                 return;
         }
 
-        timeSinceLastGameplayTick += Time.deltaTime;
-        timeSinceLastTurn += Time.deltaTime;
-
-        if (timeSinceLastTurn >= timeBetweenTurns)
+        ticksSinceLastCommunicationTurn += Time.deltaTime;
+        if (ticksSinceLastCommunicationTurn >= timeBetweenTurns)
             RunCommunicationTurn();
 
-        if (timeSinceLastGameplayTick >= timeBetweenGameplayTicks 
-            && (currentTurnReceivedFromAllPlayers || !multiplayer))
+        if (currentTurnReceivedFromAllPlayers || !multiplayer)
             RunGameplayTick();
     }
 
     void RunGameplayTick()
     {
-        timeSinceLastGameplayTick = 0.0f;
-
         for (int i = 0; i < squads.Count; i++)
             squads[i].LockStepUpdate();
 
@@ -110,7 +105,7 @@ public class GameController : MonoBehaviour
         if(!multiplayer)
         {
             gameReady = true;
-            timeSinceLastTurn = 0.0f;
+            ticksSinceLastCommunicationTurn = 0.0f;
         }
 
         // Sending command two turns in the future, so skip first two turns
@@ -132,7 +127,7 @@ public class GameController : MonoBehaviour
             currentTurnReceivedFromAllPlayers = true;
 
             // Reset for next turn
-            timeSinceLastTurn = 0.0f;
+            ticksSinceLastCommunicationTurn = 0.0f;
             currentTurn++;
         }
 

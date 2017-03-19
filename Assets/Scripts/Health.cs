@@ -65,11 +65,8 @@ public class Health : MonoBehaviour {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
     }
 
-    public float health;
     void Update()
     {
-        health = hitpoints.ToFloat();
-
         if(maxHitpoints != 0 && healthBarTransform != null)
         {
             float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
