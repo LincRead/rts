@@ -51,7 +51,7 @@ public class Unit : Boid, LockStep
     Health health;
 
     // Attack
-    int ticksBetweenAttacks = 20;
+    int ticksBetweenAttacks = 50;
     int ticksSinceLastAttack = 0;
     
     protected override void Awake()
@@ -126,7 +126,7 @@ public class Unit : Boid, LockStep
         FindUnitsCloseAllied();
 
         // Find new target enemy
-        if(targetEnemy == null)
+        if(targetEnemy == null || targetEnemy.GetComponent<Unit>().currentState == UNIT_STATES.DYING)
             FindNewTargetEnemy();
 
         // Found target enemy
@@ -202,7 +202,7 @@ public class Unit : Boid, LockStep
     {
         Fvelocity = FidleVelocity;
 
-        ticksSinceLastAttack += 1;
+        ticksSinceLastAttack++;
 
         if (ticksSinceLastAttack >= ticksBetweenAttacks)
         {
@@ -538,22 +538,32 @@ public class Unit : Boid, LockStep
     {
         FindUnitsCloseEnemy();
 
+        if (enemyActorsClose.Count == 0)
+        {
+            targetEnemy = null;
+            return;
+        }
+
         FInt shortestDistance = FlargeNumber;
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
             if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
             {
                 if (targetEnemy == enemyActorsClose[i])
+                {
                     targetEnemy = null;
-
-                continue;
+                }
+                   
             }
 
-            FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
-            if (dist < FInt.Create(3) && dist < shortestDistance)
+            else
             {
-                shortestDistance = dist;
-                targetEnemy = enemyActorsClose[i];
+                FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
+                if (dist < FInt.Create(3) && dist < shortestDistance)
+                {
+                    shortestDistance = dist;
+                    targetEnemy = enemyActorsClose[i];
+                }
             }
         }
     }

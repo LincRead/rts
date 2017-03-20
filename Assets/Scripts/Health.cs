@@ -94,7 +94,7 @@ public class Health : MonoBehaviour {
     {
         ticksSinceRegenerate++;
 
-        if(ticksSinceRegenerate == 20)
+        if(ticksSinceRegenerate == 50)
         {
             ticksSinceRegenerate = 0;
 
