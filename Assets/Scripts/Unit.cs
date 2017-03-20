@@ -123,7 +123,7 @@ public class Unit : Boid, LockStep
         // Reset interpolation
         currentLerpTime = 0.0f;
 
-        FindCloseUnits();
+        FindUnitsCloseAllied();
 
         // Find new target enemy
         if(targetEnemy == null)
@@ -536,6 +536,8 @@ public class Unit : Boid, LockStep
 
     void FindNewTargetEnemy()
     {
+        FindUnitsCloseEnemy();
+
         FInt shortestDistance = FlargeNumber;
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
@@ -619,13 +621,12 @@ public class Unit : Boid, LockStep
         // Trigger Kill animation
     }
 
-    void FindCloseUnits()
+    void FindUnitsCloseAllied()
     {
         if (currentStandingNode == null)
             return;
 
         friendlyActorsClose.Clear();
-        enemyActorsClose.Clear();
 
         neighbours = grid.GetNeighbours(currentStandingNode);
         neighbours.Add(currentStandingNode);
@@ -638,9 +639,28 @@ public class Unit : Boid, LockStep
                 {
                     if (neighbours[n].actorsStandingHere[i].playerID == playerID)
                         friendlyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
-                    else
+                }
+            }
+        }
+    }
+
+    void FindUnitsCloseEnemy()
+    {
+        if (currentStandingNode == null)
+            return;
+
+        enemyActorsClose.Clear();
+
+        for (int n = 0; n < neighbours.Count; n++)
+        {
+            for (int i = 0, len = neighbours[n].actorsStandingHere.Count; i < len; i++)
+            {
+                if (neighbours[n].actorsStandingHere[i])
+                {
+                    if (neighbours[n].actorsStandingHere[i].playerID != playerID)
                         enemyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
                 }
+
             }
         }
     }
