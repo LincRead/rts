@@ -51,6 +51,8 @@ public class Squad : Boid, LockStep {
     {
         base.Start();
 
+        spriteRenderer.enabled = false;
+
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
 
         gold = GetComponent<Gold>();
@@ -94,12 +96,19 @@ public class Squad : Boid, LockStep {
 
                 // Check if any units on target node belongs to an enemy unit
                 bool enemyIsStandingOnNode = false;
-                for(int i = 0; i < node.actorsStandingHere.Count; i++)
+
+                List<Node> nodesToCheck = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>().GetNeighbours(node);
+                nodesToCheck.Add(node);
+
+                for (int i = 0; i < nodesToCheck.Count; i++)
                 {
-                    if(node.actorsStandingHere[i].playerID != gameController.playerID)
+                    for (int j = 0; j < nodesToCheck[i].actorsStandingHere.Count; i++)
                     {
-                        enemyIsStandingOnNode = true;
-                        break;
+                        if (nodesToCheck[i].actorsStandingHere[j].playerID != gameController.playerID)
+                        {
+                            enemyIsStandingOnNode = true;
+                            break;
+                        }
                     }
                 }
 

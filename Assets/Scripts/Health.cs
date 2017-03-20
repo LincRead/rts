@@ -52,14 +52,14 @@ public class Health : MonoBehaviour {
 
         // Set up health regen icon
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + 1.25f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + offsetY + 1.45f, 0.0f), Quaternion.identity) as GameObject;
         regenIconTransform = regenIconInstance.GetComponent<Transform>();
         regenIconTransform.SetParent(gameObject.GetComponent<Transform>());
         regenIconTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
         LeanTween.scale(regenIconInstance.gameObject, new Vector3(1.3f, 1.3f, 1.0f), 0.35f).setLoopPingPong();
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
-        regenIconInstanceSpriteRenderer.enabled = false;
+        //regenIconInstanceSpriteRenderer.enabled = false;
 
         // Mics
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();

@@ -126,7 +126,8 @@ public class Unit : Boid, LockStep
         FindCloseUnits();
 
         // Find new target enemy
-        FindNewTargetEnemy();
+        if(targetEnemy == null)
+            FindNewTargetEnemy();
 
         // Found target enemy
         if(targetEnemy != null)
