@@ -127,10 +127,10 @@ public class Unit : Boid, LockStep
         currentLerpTime = 0.0f;
 
         FindUnitsCloseAllied();
+        FindUnitsCloseEnemy();
 
         // Find new target enemy
-        if(targetEnemy == null || targetEnemy.GetComponent<Unit>().currentState == UNIT_STATES.DYING)
-            FindNewTargetEnemy();
+        FindNewTargetEnemy();
 
         // Found target enemy
         if(targetEnemy != null)
@@ -197,6 +197,9 @@ public class Unit : Boid, LockStep
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
         AddSteeringForce(avoidance, FInt.FromParts(0, 200));
 
+        FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
+        AddSteeringForce(seperationEnemyUnits, FInt.FromParts(1, 0));
+
         // Desired velocity
         FdirectionVelocity = seek;
     }
@@ -227,14 +230,16 @@ public class Unit : Boid, LockStep
         Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
         Unit leader = parentSquad.leader;
 
+        int maxOffset = 1;
+
         int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - leader.GetCurrentNode().gridPosX;
         int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - leader.GetCurrentNode().gridPosY;
 
-        if (nodeOffsetFromLeaderNodeX < -3) nodeOffsetFromLeaderNodeX = -3;
-        if (nodeOffsetFromLeaderNodeX > 3) nodeOffsetFromLeaderNodeX = 3;
+        if (nodeOffsetFromLeaderNodeX < -maxOffset) nodeOffsetFromLeaderNodeX = -maxOffset;
+        if (nodeOffsetFromLeaderNodeX > maxOffset) nodeOffsetFromLeaderNodeX = maxOffset;
 
-        if (nodeOffsetFromLeaderNodeY < -3) nodeOffsetFromLeaderNodeY = -3;
-        if (nodeOffsetFromLeaderNodeY > 3) nodeOffsetFromLeaderNodeY = 3;
+        if (nodeOffsetFromLeaderNodeY < -maxOffset) nodeOffsetFromLeaderNodeY = -maxOffset;
+        if (nodeOffsetFromLeaderNodeY > maxOffset) nodeOffsetFromLeaderNodeY = maxOffset;
 
         Node myTargetNode = pathFinding.GetNodeFromGridPos(
             leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
@@ -475,7 +480,8 @@ public class Unit : Boid, LockStep
 
             if (dist > 0 && dist < desiredseparation)
             {
-                if(actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                if(actors[i].playerID == playerID && 
+                    actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
                 {
                     currentState = UNIT_STATES.IDLE;
                     Fvelocity = FidleVelocity;
@@ -539,8 +545,6 @@ public class Unit : Boid, LockStep
 
     void FindNewTargetEnemy()
     {
-        FindUnitsCloseEnemy();
-
         if (enemyActorsClose.Count == 0)
         {
             targetEnemy = null;
