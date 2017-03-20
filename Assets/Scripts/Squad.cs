@@ -169,8 +169,17 @@ public class Squad : Boid, LockStep {
         FAverageUnitFVelocity = FPoint.Create();
         for (int i = 0; i < units.Count; i++)
         {
-            FAverageUnitFVelocity.X += units[i].GetFVelocity().X;
-            FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y;
+            if(units[i] == leader)
+            {
+                FAverageUnitFVelocity.X += units[i].GetFVelocity().X * 2;
+                FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y * 2;
+            }
+
+            else if(!units[i].IsMergingWithSquad())
+            {
+                FAverageUnitFVelocity.X += units[i].GetFVelocity().X;
+                FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y;
+            }
         }
 
         FAverageUnitFVelocity.X = FAverageUnitFVelocity.X / units.Count;
@@ -184,6 +193,14 @@ public class Squad : Boid, LockStep {
 
     public void FindNewLeader()
     {
+        if (units.Count == 1)
+        {
+            leader = units[0];
+            leader.isLeader = true;
+            leader.CancelMergingWithSquad();
+            return;
+        }
+
         // Tell old leader his or her leadership is over
         if (leader != null)
             leader.GetComponent<Unit>().isLeader = false;
@@ -232,6 +249,19 @@ public class Squad : Boid, LockStep {
         Unit unitScript = newUnit.GetComponent<Unit>();
         unitScript.SetSquad(this);
         unitScript.playerID = playerID;
+    }
+
+    public int GetMergingUnits()
+    {
+        int numMergingUnits = 0;
+
+        for(int i = 0; i < units.Count; i++)
+        {
+            if (units[i].IsMergingWithSquad())
+                numMergingUnits++;
+        }
+
+        return numMergingUnits;
     }
 
     public void RemoveUnit(Unit unitToRemove) { units.Remove(unitToRemove); }

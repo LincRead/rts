@@ -20,12 +20,19 @@ public class HQ : FActor {
         ticksSinceSpawn++;
         if (ticksSinceSpawn == ticksBetweenSpawn)
         {
-            GameObject spawnedUnit = GameObject.Instantiate(unitPrefab, transform.position + new Vector3(0.0f, -2f, 0.0f), Quaternion.identity) as GameObject;
             GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
             for (int i = 0; i < squads.Length; i++)
             {
                 if (squads[i].GetComponent<Squad>().playerID == this.playerID)
+                {
+                    GameObject spawnedUnit = GameObject.Instantiate(
+                        unitPrefab,
+                        // Make sure units don't spawn at the exact same position, or selse seperation steering won't work
+                        transform.position + new Vector3(0.0f + (0.2f * squads[i].GetComponent<Squad>().GetMergingUnits()), -2f - (0.2f * squads[i].GetComponent<Squad>().GetMergingUnits()), 0.0f),
+                        Quaternion.identity) as GameObject;
+
                     squads[i].GetComponent<Squad>().AddUnit(spawnedUnit.GetComponent<Unit>());
+                }
             }
 
             ticksSinceSpawn = 0;

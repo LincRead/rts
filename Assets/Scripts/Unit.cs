@@ -16,7 +16,7 @@ public class Unit : Boid, LockStep
     }
 
     [Header("Debug state")]
-    public UNIT_STATES currentState = UNIT_STATES.IDLE;
+    public UNIT_STATES currentState = UNIT_STATES.MOVE;
 
     private bool mergingWithSquad = true;
 
@@ -59,9 +59,7 @@ public class Unit : Boid, LockStep
         base.Awake();
 
         animator = GetComponent<Animator>();
-
         health = GetComponent<Health>();
-
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         if (health == null)
@@ -72,6 +70,7 @@ public class Unit : Boid, LockStep
     {
         base.Start();
 
+        // Todo don't need to store all obstacles here, can do it in squad or GameController and fetch them
         GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
         for (var i = 0; i < obstaclesArray.Length; i++)
             obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
@@ -179,6 +178,12 @@ public class Unit : Boid, LockStep
     void HandleIdling()
     {
         Fvelocity = FidleVelocity;
+
+        if(mergingWithSquad)
+        {
+            FPoint seperation = ComputeSeperation(friendlyActorsClose);
+            AddSteeringForce(seperation, FInt.FromParts(0, 700));
+        }
     }
 
     void HandleChasingUnit()
@@ -480,12 +485,16 @@ public class Unit : Boid, LockStep
 
             if (dist > 0 && dist < desiredseparation)
             {
-                if(actors[i].playerID == playerID && 
-                    actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                if(actors[i].playerID == playerID)
                 {
-                    currentState = UNIT_STATES.IDLE;
-                    Fvelocity = FidleVelocity;
-                    mergingWithSquad = false;
+                    if(actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                    {
+                        currentState = UNIT_STATES.IDLE;
+                        Fvelocity = FidleVelocity;
+                    }
+
+                    if(mergingWithSquad && !actors[i].GetComponent<Unit>().mergingWithSquad)
+                        mergingWithSquad = false;
                 }
 
                 FPoint diff = FPoint.VectorSubtract(Fpos, actors[i].GetFPosition());

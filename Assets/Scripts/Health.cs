@@ -59,7 +59,7 @@ public class Health : MonoBehaviour {
 
         LeanTween.scale(regenIconInstance.gameObject, new Vector3(1.3f, 1.3f, 1.0f), 0.35f).setLoopPingPong();
         regenIconInstanceSpriteRenderer = regenIconInstance.GetComponent<SpriteRenderer>();
-        //regenIconInstanceSpriteRenderer.enabled = false;
+        regenIconInstanceSpriteRenderer.enabled = false;
 
         // Mics
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
