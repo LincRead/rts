@@ -102,7 +102,7 @@ public class Squad : Boid, LockStep {
 
                 for (int i = 0; i < nodesToCheck.Count; i++)
                 {
-                    for (int j = 0; j < nodesToCheck[i].actorsStandingHere.Count; i++)
+                    for (int j = 0; j < nodesToCheck[i].actorsStandingHere.Count; j++)
                     {
                         if (nodesToCheck[i].actorsStandingHere[j].playerID != gameController.playerID)
                         {

@@ -617,7 +617,7 @@ public class Unit : Boid, LockStep
     {
         health.ChangeHitpoints(-damageValue);
 
-        if (health.IsHitpointsZero())
+        if (health.HasZeroHitpoints())
             Kill();
     }
 
@@ -715,7 +715,7 @@ public class Unit : Boid, LockStep
 
     void CanFindNewTarget() { canFindNewTarget = true; }
 
-    public bool IsDead() { return health.IsHitpointsZero(); }
+    public bool IsDead() { return health.HasZeroHitpoints(); }
 
     public void CancelMergingWithSquad() { mergingWithSquad = false; }
 

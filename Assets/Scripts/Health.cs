@@ -157,7 +157,7 @@ public class Health : MonoBehaviour {
         return hitpoints;
     }
 
-    public bool IsHitpointsZero() {
+    public bool HasZeroHitpoints() {
         return hitpoints == zeroHitpoints;
     }
 
