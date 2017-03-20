@@ -17,6 +17,7 @@ public class InputHoveringUI : MonoBehaviour {
 
     void ValidateInput()
     {
+        // Suspect failure on Android
         if (Input.GetMouseButtonDown(0))
         {
             if (EventSystem.current.IsPointerOverGameObject())
@@ -24,6 +25,8 @@ public class InputHoveringUI : MonoBehaviour {
             else
                 hoveringUI = false;
         }
+
+        hoveringUI = false;
     }
 
     public bool IsHoveringUI()

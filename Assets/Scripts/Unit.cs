@@ -45,7 +45,7 @@ public class Unit : Boid, LockStep
     List<FActor> friendlyActorsClose = new List<FActor>(30);
     List<FActor> enemyActorsClose = new List<FActor>(30);
     List<FActor> obstacles = new List<FActor>(20);
-    List<Node> neighbours;
+    List<Node> neighbours = new List<Node>();
 
     // Health
     Health health;
@@ -62,6 +62,8 @@ public class Unit : Boid, LockStep
 
         health = GetComponent<Health>();
 
+        grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
+
         if (health == null)
             Debug.LogError("Unit always needs a Health script attached");
     } 
@@ -69,8 +71,6 @@ public class Unit : Boid, LockStep
     protected override void Start()
     {
         base.Start();
-
-        grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
         for (var i = 0; i < obstaclesArray.Length; i++)
@@ -669,6 +669,9 @@ public class Unit : Boid, LockStep
 
     bool isCloseToHQ()
     {
+        if (parentSquad.GetHQ() == null)
+            return false;
+
         return (GetDistanceBetweenPoints(GetFPosition(), parentSquad.GetHQ().GetFPosition()) < FradiusCloseToHQ * FradiusCloseToHQ);
     }
 

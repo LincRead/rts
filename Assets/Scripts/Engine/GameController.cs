@@ -22,10 +22,6 @@ public class GameController : MonoBehaviour
     float timeBetweenTurns = .2f;
     float ticksSinceLastCommunicationTurn = 0.0f;
 
-    // Gameplay tick
-    public static float timeBetweenGameplayTicks = .05f;
-    float timeSinceLastGameplayTick = 0.1f;
-
     // Command
     MessageCommand commandToSend = null;
     bool currentTurnReceivedFromAllPlayers = true;
@@ -42,6 +38,7 @@ public class GameController : MonoBehaviour
     private bool multiplayer = false;
 
     List<Squad> squads = new List<Squad>(12);
+    GameObject[] obstacles = new GameObject[0];
 
     // Todo: make dynamic based on players connected to game
     private int numPlayers = 2;
@@ -55,18 +52,15 @@ public class GameController : MonoBehaviour
 
         GameObject[] squadPrefabs = GameObject.FindGameObjectsWithTag("Squad");
         for(int i = 0; i < squadPrefabs.Length; i++)
-        {
             squads.Add(squadPrefabs[i].GetComponent<Squad>());
-        }
+
+        obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
 
         for (int i = 0; i < numPlayers; i++)
             playersReady[i] = false;
 
-        // Don't have to wait for other players
-        if (!multiplayer)
-            gameReady = true;
         // Make sure we don't set a valid number until Server shares our id
-        else
+        if(multiplayer)
             playerID = -1;
     }
 
@@ -75,8 +69,17 @@ public class GameController : MonoBehaviour
         // Wait until game is ready
         if (!gameReady)
         {
+            // Don't have to wait for other players
+            if (!multiplayer)
+            {
+                gameReady = true;
+
+                // Skip first
+                return;
+            }
+
             // All players are ready
-            if(playersReady[0] == true && playersReady[1] == true)
+            if (playersReady[0] == true && playersReady[1] == true)
                 gameReady = true;
             else
                 return;
@@ -95,7 +98,6 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < squads.Count; i++)
             squads[i].LockStepUpdate();
 
-        GameObject[] obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         for (int i = 0; i < obstacles.Length; i++)
             obstacles[i].GetComponent<FActor>().LockStepUpdate();
     }
@@ -259,11 +261,6 @@ public class GameController : MonoBehaviour
     public bool IsValidSquadInput()
     {
         return !inputHoveringUI.IsHoveringUI() && !cameraRTS.IsMoving();
-    }
-
-    public static float GetTicksPerSecond()
-    {
-        return 1f / timeBetweenGameplayTicks;
     }
 }
 

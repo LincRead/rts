@@ -31,7 +31,7 @@ public class Health : MonoBehaviour {
     FInt hitpoints = FInt.Create(0);
     FInt zeroHitpoints = FInt.Create(0);
 
-    void Start () {
+    void Awake () {
         healthBarOutlineInstance = GameObject.Instantiate(healthBarOutlinePrefab,
             transform.position, Quaternion.identity) as GameObject;
 

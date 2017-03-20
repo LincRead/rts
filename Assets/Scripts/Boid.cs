@@ -9,11 +9,16 @@ public class Boid : FActor, LockStep
     protected Node currentStandingNode;
     protected int currentWaypointTarget = 0;
 
+    protected override void Awake()
+    {
+        pathFinding = GetComponent<Pathfinding>();
+
+        base.Awake();
+    }
+
     protected override void Start()
     {
         base.Start();
-
-        pathFinding = GetComponent<Pathfinding>();
     }
 
     public override void LockStepUpdate()

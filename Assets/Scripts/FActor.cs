@@ -18,14 +18,15 @@ public class FActor : MonoBehaviour, LockStep
 
     protected virtual void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        Fpos.X = FInt.FromFloat(transform.localPosition.x);
-        Fpos.Y = FInt.FromFloat(transform.localPosition.y);
-        FboundingRadius = FInt.FromFloat(boundingRadius);
+
     }
 
     protected virtual void Start()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        Fpos.X = FInt.FromFloat(transform.localPosition.x);
+        Fpos.Y = FInt.FromFloat(transform.localPosition.y);
+        FboundingRadius = FInt.FromFloat(boundingRadius);
         transform.position = GetRealPosToVector3();
     }
 

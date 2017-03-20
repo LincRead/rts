@@ -12,7 +12,12 @@ public class Pathfinding : MonoBehaviour {
     public Node currentStandingOnNode;
     protected Node startNode;
     protected Node destinationNode;
-    protected FActor parentReference; 
+    protected FActor parentReference;
+
+    void Awake()
+    {
+
+    }
 
     // Use this for initialization
     void Start()

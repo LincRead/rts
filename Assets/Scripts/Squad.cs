@@ -45,13 +45,13 @@ public class Squad : Boid, LockStep {
     protected override void Awake()
     {
         base.Awake();
-
-        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
     }
 
     protected override void Start()
     {
         base.Start();
+
+        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
 
         gold = GetComponent<Gold>();
         InitUnits(numStartingUnits);
