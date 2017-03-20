@@ -111,7 +111,10 @@ public class Unit : Boid, LockStep
 
     public override void LockStepUpdate()
     {
-        base.LockStepUpdate();
+        if (currentState != UNIT_STATES.DYING)
+            base.LockStepUpdate();
+        else
+            return;
 
         // Update health
         if ((currentState == UNIT_STATES.IDLE || currentState == UNIT_STATES.MOVE)
