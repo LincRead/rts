@@ -52,7 +52,7 @@ public class Health : MonoBehaviour {
 
         // Set up health regen icon
         regenIconInstance = GameObject.Instantiate(regenIconPrefab,
-            new Vector3(transform.position.x, transform.position.y + offsetY + 1.45f, 0.0f), Quaternion.identity) as GameObject;
+            new Vector3(transform.position.x, transform.position.y + offsetY + 1.75f, 0.0f), Quaternion.identity) as GameObject;
         regenIconTransform = regenIconInstance.GetComponent<Transform>();
         regenIconTransform.SetParent(gameObject.GetComponent<Transform>());
         regenIconTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);

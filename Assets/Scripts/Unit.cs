@@ -305,7 +305,7 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
-        float scale = 0.8f;
+        float scale = 1f;
 
         // Moving and merged with squad
         // Or is leader
