@@ -133,9 +133,7 @@ public class Unit : Boid, LockStep
         FindCloseEnemyUnits();
 
         // Find new target enemy
-        // Don't find new target if already attacking!
-        if (currentState != UNIT_STATES.ATTACKING)
-            FindNewTargetEnemy();
+        FindNewTargetEnemy();
 
         // Found target enemy
         if(targetEnemy != null)
@@ -584,19 +582,17 @@ public class Unit : Boid, LockStep
             return;
         }
 
+        if (targetEnemy != null && targetEnemy.GetComponent<Unit>().currentState == UNIT_STATES.DYING)
+            targetEnemy = null;
+
+        // Don't need to find someone new to target if already attacking someone still alive
+        else if (currentState == UNIT_STATES.ATTACKING)
+            return;
+
         FInt shortestDistance = FlargeNumber;
         for (int i = 0; i < enemyActorsClose.Count; i++)
         {
-            if (enemyActorsClose[i].GetComponent<Unit>().currentState == UNIT_STATES.DYING)
-            {
-                if (targetEnemy == enemyActorsClose[i])
-                {
-                    targetEnemy = null;
-                }
-                   
-            }
-
-            else
+            if (enemyActorsClose[i].GetComponent<Unit>().currentState != UNIT_STATES.DYING)
             {
                 FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
                 if (dist < FradiusDetectEnemy && dist < shortestDistance)
