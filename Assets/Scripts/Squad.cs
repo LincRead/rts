@@ -248,8 +248,8 @@ public class Squad : Boid, LockStep {
     {
         units.Add(newUnit);
         Unit unitScript = newUnit.GetComponent<Unit>();
-        unitScript.SetSquad(this);
         unitScript.playerID = playerID;
+        unitScript.SetSquad(this);
     }
 
     public int GetMergingUnits()

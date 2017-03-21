@@ -81,6 +81,7 @@ public class Unit : Boid, LockStep
         parentSquad = squad;
         health.SetMaxHitpoints(squad.unitMaxHitpoints);
         health.SetHitpoints(squad.unitMaxHitpoints);
+        health.SetBelongsToEnemyUnit(playerID != GameController.Manager.playerID);
         moveSpeed = FInt.FromFloat(squad.unitMoveSpeed);
     }
 

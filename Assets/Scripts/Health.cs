@@ -22,6 +22,8 @@ public class Health : MonoBehaviour {
 
     float healthBarDefaultWidth = 0.0f;
 
+    bool belongsToEnemyUnit = false;
+
     public float offsetY = 0.0f;
 
     public int regeneratePerSecond = 2;
@@ -79,12 +81,8 @@ public class Health : MonoBehaviour {
                 healthBarOutlineTransform.position.y,
                 healthBarOutlineTransform.position.z);
 
-            if (scaleX <= 0.5f)
+            if (belongsToEnemyUnit)
                 healthBarSpriteRenderer.color = Color.red;
-            else if (scaleX < 0.65f)
-                healthBarSpriteRenderer.color = new Color(1.0f, 0.7f, 0.0f);
-            else if (scaleX < 0.8f)
-                healthBarSpriteRenderer.color = Color.yellow;
             else
                 healthBarSpriteRenderer.color = Color.green;
         }
@@ -143,6 +141,11 @@ public class Health : MonoBehaviour {
             healthBarOutlineSpriteRenderer.enabled = false;
         }
 
+    }
+
+    public void SetBelongsToEnemyUnit(bool isEnemy)
+    {
+        belongsToEnemyUnit = isEnemy;
     }
 
     public void SetMaxHitpoints(int maxHP) {

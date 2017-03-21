@@ -11,6 +11,9 @@ public class Turn
 
 public class GameController : MonoBehaviour
 {
+    // Singleton
+    public static GameController Manager;
+
     // Components
     NetworkManager networkManager;
     InputHoveringUI inputHoveringUI;
@@ -43,8 +46,15 @@ public class GameController : MonoBehaviour
     // Todo: make dynamic based on players connected to game
     private int numPlayers = 2;
 
+    void Awake()
+    {
+        // Singleton
+        Manager = this;
+    }
+
     void Start()
     {
+
         networkManager = GetComponent<NetworkManager>();
         inputHoveringUI = GetComponent<InputHoveringUI>();
         cameraRTS = Camera.main.GetComponent<CameraRTS>();
