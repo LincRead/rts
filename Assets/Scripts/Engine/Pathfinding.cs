@@ -165,4 +165,6 @@ public class Pathfinding : MonoBehaviour {
         if (currentStandingOnNode.actorsStandingHere.Count == 0)
             currentStandingOnNode.squadStandingHere = false;
     }
+
+    public Grid GetGrid() { return grid; }
 }

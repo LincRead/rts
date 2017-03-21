@@ -87,7 +87,12 @@ public class Squad : Boid, LockStep {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Node node = pathFinding.GetNodeFromPoint(mousePosition);
 
-            if (node.walkable)
+            // Clicked on an obstcale
+            // Find a node closest to obstacle that is walkable
+            if (!node.walkable)
+                node = FindClosestWalkableNode(node);
+
+            if (node != null && node.walkable)
             {
                 // Store so we can revert by end of loop
                 FPosLast = Fpos;
@@ -147,6 +152,28 @@ public class Squad : Boid, LockStep {
 
         UpdateSquadDirection();
         transform.position = GetRealPosToVector3();
+    }
+
+    Node FindClosestWalkableNode(Node node)
+    {
+        List <Node> nodes = pathFinding.GetGrid().GetNeighbours(node);
+        Node closestNode = null;
+
+        FInt shortestDistance = FlargeNumber;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            if(nodes[i].walkable)
+            {
+                FInt dist = GetDistanceBetweenPoints(node._FworldPosition, nodes[i]._FworldPosition);
+                if (dist < shortestDistance)
+                {
+                    shortestDistance = dist;
+                    closestNode = nodes[i];
+                }
+            }
+        }
+
+        return closestNode;
     }
 
     public void MoveToTarget(int x, int y)

@@ -336,7 +336,7 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
-        float scale = 1f;
+        float scale = .9f;
 
         if (currentState == UNIT_STATES.MOVE)
         {
