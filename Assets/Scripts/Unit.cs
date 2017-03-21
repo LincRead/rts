@@ -336,7 +336,7 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
-        float scale = .9f;
+        float scale = 1.0f;
 
         if (currentState == UNIT_STATES.MOVE)
         {
@@ -672,8 +672,9 @@ public class Unit : Boid, LockStep
         health.Destroy();
 
         // Trigger Kill animation
+        animator.Play("Die");
 
-        Invoke("Destroy", 1.0f); // TODO: get death anim duration
+        Invoke("Destroy", .2f); // TODO: get death anim duration
     }
 
     void FindCloseFriendlyUnits()
@@ -727,9 +728,7 @@ public class Unit : Boid, LockStep
 
     void DebugStateWithColor()
     {
-        if (IsDead())
-            spriteRenderer.color = Color.black;
-        else if (isLeader)
+        if (isLeader)
         {
             if (playerID == 0)
                 spriteRenderer.color = Color.red;

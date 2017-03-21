@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 4ed3e00d04026a04d81c8e0d80712b08
-timeCreated: 1490054400
+guid: 15aa6d01b8dd5c045b3fd1d5a2a21776
+timeCreated: 1490070988
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -23,6 +23,7 @@ TextureImporter:
     21300032: Goblin_16
     21300034: Goblin_17
     21300036: Goblin_18
+    21300038: Goblin_19
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -45,10 +46,10 @@ TextureImporter:
   cubemapConvolutionSteps: 7
   cubemapConvolutionExponent: 1.5
   seamlessCubemap: 0
-  textureFormat: -2
+  textureFormat: -1
   maxTextureSize: 2048
   textureSettings:
-    filterMode: 1
+    filterMode: -1
     aniso: 16
     mipBias: -1
     wrapMode: 1
@@ -75,11 +76,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 408
+        y: 448
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -88,11 +89,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 136
-        y: 408
+        y: 448
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -101,11 +102,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 272
-        y: 408
+        y: 448
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -114,11 +115,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 408
-        y: 408
+        y: 448
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -126,12 +127,12 @@ TextureImporter:
       name: Goblin_4
       rect:
         serializedVersion: 2
-        x: 544
-        y: 408
+        x: 0
+        y: 336
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -139,12 +140,12 @@ TextureImporter:
       name: Goblin_5
       rect:
         serializedVersion: 2
-        x: 680
-        y: 408
+        x: 136
+        y: 336
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -152,12 +153,12 @@ TextureImporter:
       name: Goblin_6
       rect:
         serializedVersion: 2
-        x: 0
-        y: 272
+        x: 272
+        y: 336
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -165,12 +166,12 @@ TextureImporter:
       name: Goblin_7
       rect:
         serializedVersion: 2
-        x: 136
-        y: 272
+        x: 408
+        y: 336
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -178,12 +179,12 @@ TextureImporter:
       name: Goblin_8
       rect:
         serializedVersion: 2
-        x: 272
-        y: 272
+        x: 0
+        y: 224
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -191,12 +192,12 @@ TextureImporter:
       name: Goblin_9
       rect:
         serializedVersion: 2
-        x: 408
-        y: 272
+        x: 136
+        y: 224
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -204,12 +205,12 @@ TextureImporter:
       name: Goblin_10
       rect:
         serializedVersion: 2
-        x: 544
-        y: 272
+        x: 272
+        y: 224
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -217,12 +218,12 @@ TextureImporter:
       name: Goblin_11
       rect:
         serializedVersion: 2
-        x: 680
-        y: 272
+        x: 408
+        y: 224
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -231,11 +232,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 136
+        y: 112
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -244,11 +245,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 136
-        y: 136
+        y: 112
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -257,11 +258,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 272
-        y: 136
+        y: 112
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -270,11 +271,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 408
-        y: 136
+        y: 112
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -282,12 +283,12 @@ TextureImporter:
       name: Goblin_16
       rect:
         serializedVersion: 2
-        x: 544
-        y: 136
+        x: 0
+        y: 0
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -295,12 +296,12 @@ TextureImporter:
       name: Goblin_17
       rect:
         serializedVersion: 2
-        x: 680
-        y: 136
+        x: 136
+        y: 0
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
@@ -308,12 +309,25 @@ TextureImporter:
       name: Goblin_18
       rect:
         serializedVersion: 2
-        x: 0
+        x: 272
         y: 0
         width: 136
-        height: 136
-      alignment: 9
-      pivot: {x: 0.5, y: 0.1}
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: Goblin_19
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 0
+        width: 136
+        height: 112
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: 0
