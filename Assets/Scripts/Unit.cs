@@ -55,6 +55,7 @@ public class Unit : Boid, LockStep
     // Attack
     int ticksBetweenAttacks = 50;
     int ticksSinceLastAttack = 0;
+    bool canCancelAttack = true;
     
     protected override void Awake()
     {
@@ -159,6 +160,7 @@ public class Unit : Boid, LockStep
     {
         targetEnemy = null;
         currentState = UNIT_STATES.MOVE;
+        canCancelAttack = true;
         canFindNewTarget = false;
         Invoke("CanFindNewTarget", 1f); // Todo lockstep
     }
@@ -222,6 +224,7 @@ public class Unit : Boid, LockStep
 
         if (ticksSinceLastAttack >= ticksBetweenAttacks)
         {
+            canCancelAttack = true;
             ticksSinceLastAttack = 0;
             Attack();
         } 
@@ -442,7 +445,7 @@ public class Unit : Boid, LockStep
             // Reaching squad target destination
             if (dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
-                currentState = UNIT_STATES.IDLE;
+                Idle();
             }
         }
 
@@ -508,8 +511,7 @@ public class Unit : Boid, LockStep
                     // Not every single unit can reach the same point
                     if (actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
                     {
-                        currentState = UNIT_STATES.IDLE;
-                        Fvelocity = FidleVelocity;
+                        Idle();
                     }
 
                     // We reached squad, so we are no longer merging with it
@@ -617,6 +619,7 @@ public class Unit : Boid, LockStep
                 if(currentState != UNIT_STATES.ATTACKING)
                 {
                     ticksSinceLastAttack = 0;
+                    canCancelAttack = false;
                     animator.SetBool("attacking", true);
                     animator.Play("Attack");
                 }
@@ -625,11 +628,19 @@ public class Unit : Boid, LockStep
             }
 
             else if (parentSquad.leader.currentState != UNIT_STATES.MOVE
-                && (currentState != UNIT_STATES.ATTACKING || GetDistanceToFActor(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2))
+                && (currentState != UNIT_STATES.ATTACKING || GetDistanceToFActor(targetEnemy) > targetEnemy.GetFBoundingRadius() * 2)
+                && canCancelAttack)
             {
                 currentState = UNIT_STATES.CHASING;
             }
         }
+    }
+
+    void Idle()
+    {
+        currentState = UNIT_STATES.IDLE;
+        Fvelocity = FidleVelocity;
+        canCancelAttack = true;
     }
 
     void Attack()
