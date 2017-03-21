@@ -6,6 +6,7 @@ public class HQ : FActor {
     [Header("HQ")]
     public bool spawnUnits = true;
     public int ticksBetweenSpawn = 40;
+    public int maxUnits = 30;
     private int ticksSinceSpawn = 0;
 
     public GameObject unitPrefab;
@@ -23,7 +24,10 @@ public class HQ : FActor {
             GameObject[] squads = GameObject.FindGameObjectsWithTag("Squad");
             for (int i = 0; i < squads.Length; i++)
             {
-                if (squads[i].GetComponent<Squad>().playerID == this.playerID)
+                // Spawn for attached playerID
+                if (squads[i].GetComponent<Squad>().playerID == this.playerID 
+                    // Less than max units
+                    && squads[i].GetComponent<Squad>().GetUnits().Count < maxUnits)
                 {
                     GameObject spawnedUnit = GameObject.Instantiate(
                         unitPrefab,
