@@ -79,9 +79,9 @@ public class Boid : FActor, LockStep
         FInt radius = obstacle.GetFBoundingRadius();
         FInt distA = Distance(aheadFull, obstacle.GetFPosition());
         FInt distB = Distance(aheadHalf, obstacle.GetFPosition());
-        FInt distC = Distance(currPos, obstacle.GetFPosition());
+        //FInt distC = Distance(currPos, obstacle.GetFPosition());
 
-        return distA <= radius * radius || distB <= radius * radius || distC <= radius * radius;
+        return distA <= radius * radius || distB <= radius * radius; // || distC <= radius * radius;
     }
 
     FInt Distance(FPoint a, FPoint b)

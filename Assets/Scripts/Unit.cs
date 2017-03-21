@@ -202,8 +202,9 @@ public class Unit : Boid, LockStep
         AddSteeringForce(seperation, FInt.FromParts(0, 700));
 
         // Find a way around friendly units
-        FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
-        AddSteeringForce(avoidance, FInt.FromParts(0, 200));
+        // Too much resources spent on this one!!!
+        //FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
+        //AddSteeringForce(avoidance, FInt.FromParts(0, 200));
 
         // Don't move through enemy units
         FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
@@ -467,7 +468,6 @@ public class Unit : Boid, LockStep
         {
             posx += actors[i].GetComponent<Unit>().Fpos.X;
             posy += actors[i].GetComponent<Unit>().Fpos.Y;
-            FInt dist = GetDistanceToFActor(actors[i]);
             neighborCount++;
         }
 
