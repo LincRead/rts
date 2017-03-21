@@ -43,13 +43,12 @@ public class Node : IHeapItem<Node>
         gridPosY = _gridPosY;
 
         this.grid = grid;
-
-        CreateTile();
     }
 
-    public void CreateTile()
+    public void CreateTile(Sprite sprite)
     {
         GameObject node = GameObject.Instantiate(Resources.Load("Tiles/Grass"), worldPosition, Quaternion.identity) as GameObject;
+        node.GetComponent<SpriteRenderer>().sprite = sprite;
         node.transform.SetParent(grid.transform);
     }
 

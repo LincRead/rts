@@ -28,6 +28,9 @@ public class Grid : MonoBehaviour
 
     private Node[,] nodes;
 
+    [Header("Tile set")]
+    public Sprite[] tiles;
+
     void Start()
     {
         if (gridSizeX < 16)
@@ -83,7 +86,7 @@ public class Grid : MonoBehaviour
                     walkable = false;
 
                 nodes[x, y] = new Node(walkable, worldPoint, x, y, this);
-
+                nodes[x, y].CreateTile(tiles[(int)(Random.value * tiles.Length)]);
             }
         }
     }
