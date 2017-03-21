@@ -56,7 +56,10 @@ public class Unit : Boid, LockStep
     int ticksBetweenAttacks = 50;
     int ticksSinceLastAttack = 0;
     bool canCancelAttack = true;
-    
+
+    // Steering values
+    FInt desiredSeparation = FInt.FromParts(0, 270);
+
     protected override void Awake()
     {
         base.Awake();
@@ -496,26 +499,27 @@ public class Unit : Boid, LockStep
     protected FPoint ComputeSeperation(List<FActor> actors)
     {
         FPoint steer = FidleVelocity;
-        FInt desiredseparation = FInt.FromParts(0, 270);
         int neighborCount = 0;
 
         for (int i = 0; i < actors.Count; i++)
         {
             FInt dist = GetDistanceToFActor(actors[i]);
 
-            if (dist > 0 && dist < desiredseparation)
+            if (dist > 0 && dist < desiredSeparation)
             {
                 if(actors[i].playerID == playerID)
                 {
+                    Unit unit = actors[i].GetComponent<Unit>();
+
                     // Reaching squad target destination (based on other units having reached it
                     // Not every single unit can reach the same point
-                    if (actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                    if (unit.currentState == UNIT_STATES.IDLE)
                     {
                         Idle();
                     }
 
                     // We reached squad, so we are no longer merging with it
-                    if(mergingWithSquad && !actors[i].GetComponent<Unit>().mergingWithSquad)
+                    if(mergingWithSquad && !unit.mergingWithSquad)
                         mergingWithSquad = false;
                 }
 

@@ -60,9 +60,10 @@ public class Boid : FActor, LockStep
         if (obstacle == null)
             return false;
 
-        FInt radius = obstacle.GetFBoundingRadius();
+        FInt radius = obstacle.GetFBoundingRadius() * 2;
 
         Gizmos.color = Color.yellow;
+
         if (playerID == 0)
             Debug.DrawLine(new Vector2(ahead.X.ToFloat(), ahead.Y.ToFloat()), new Vector2(obstacle.GetFPosition().X.ToFloat(), obstacle.GetFPosition().Y.ToFloat()));
 
@@ -74,14 +75,12 @@ public class Boid : FActor, LockStep
     {
         Debug.DrawLine(new Vector2(aheadFull.X.ToFloat(), aheadFull.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.red);
         Debug.DrawLine(new Vector2(aheadHalf.X.ToFloat(), aheadHalf.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.yellow);
-        Debug.DrawLine(new Vector2(currPos.X.ToFloat(), currPos.Y.ToFloat()), new Vector2(GetFPosition().X.ToFloat(), GetFPosition().Y.ToFloat()), Color.green);
 
-        FInt radius = obstacle.GetFBoundingRadius();
+        FInt radius = obstacle.GetFBoundingRadius() * 2;
         FInt distA = Distance(aheadFull, obstacle.GetFPosition());
         FInt distB = Distance(aheadHalf, obstacle.GetFPosition());
-        //FInt distC = Distance(currPos, obstacle.GetFPosition());
 
-        return distA <= radius * radius || distB <= radius * radius; // || distC <= radius * radius;
+        return distA <= radius || distB <= radius;
     }
 
     FInt Distance(FPoint a, FPoint b)
