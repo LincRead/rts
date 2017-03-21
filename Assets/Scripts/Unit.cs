@@ -18,30 +18,32 @@ public class Unit : Boid, LockStep
     [Header("Debug state")]
     public UNIT_STATES currentState = UNIT_STATES.MOVE;
 
-    private bool mergingWithSquad = true;
-
     [HideInInspector]
     public bool isLeader = false;
 
     // Movement
     FInt moveSpeed;
     FPoint FidleVelocity = FPoint.Create();
-    FActor targetEnemy;
+    bool mergingWithSquad = true;
 
     // Desired FVelocity to get to target without seperation, obstacle avoidance etc.
     FPoint FdirectionVelocity = FPoint.Create();
+
+    // Targeting enemy
+    FActor targetEnemy;
+    bool canFindNewTarget = true;
 
     // Preset numbers
     FPoint FaheadFull;
     FPoint FaheadHalf;
 
     FInt FradiusCloseToHQ = FInt.Create(5);
-
-    bool canFindNewTarget = true;
+    FInt FradiusDetectEnemy = FInt.Create(5);
 
     Animator animator;
     Grid grid;
     Squad parentSquad;
+
     List<FActor> friendlyActorsClose = new List<FActor>(30);
     List<FActor> enemyActorsClose = new List<FActor>(30);
     List<FActor> obstacles = new List<FActor>(20);
@@ -63,7 +65,7 @@ public class Unit : Boid, LockStep
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         if (health == null)
-            Debug.LogError("Unit always needs a Health script attached");
+            Debug.LogError("Unit always needs a Health script atftached");
     } 
 
     protected override void Start()
@@ -126,8 +128,8 @@ public class Unit : Boid, LockStep
         // Reset interpolation
         currentLerpTime = 0.0f;
 
-        FindUnitsCloseAllied();
-        FindUnitsCloseEnemy();
+        FindCloseFriendlyUnits();
+        FindCloseEnemyUnits();
 
         // Find new target enemy
         FindNewTargetEnemy();
@@ -203,6 +205,7 @@ public class Unit : Boid, LockStep
         FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
         AddSteeringForce(avoidance, FInt.FromParts(0, 200));
 
+        // Don't move through enemy units
         FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
         AddSteeringForce(seperationEnemyUnits, FInt.FromParts(1, 0));
 
@@ -225,16 +228,21 @@ public class Unit : Boid, LockStep
 
     void HandleDying()
     {
-
+        // Doesnt't really do anything other than waiting for animation to finish...
     }
 
     void HandleMovingToTarget()
     {
-        Fvelocity = FidleVelocity;
-        List<Node> newPath;
-        FPoint seek = FidleVelocity;
-        Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
+        // Move to target if leader exists
         Unit leader = parentSquad.leader;
+        if (leader == null)
+            return;
+
+        List<Node> newPath;
+        Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
+        FPoint seek = FidleVelocity;
+
+        Fvelocity = FidleVelocity;
 
         int maxOffset = 1;
 
@@ -251,14 +259,17 @@ public class Unit : Boid, LockStep
             leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
             leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
 
+        // If node is unwalkable, go to same node as leader
         if (myTargetNode.walkable)
             newPath = pathFinding.FindPath(myTargetNode);
         else
             newPath = pathFinding.FindPath(leaderTargetNode);
 
+        // Set path to follow
         if (newPath != null)
             path = newPath;
 
+        // Follow path if path exists
         if (path != null && path.Count > 0)
         {
             if (GetDistanceBetweenPoints(path[0]._FworldPosition, GetFPosition()) < FInt.FromParts(0, 500))
@@ -268,27 +279,34 @@ public class Unit : Boid, LockStep
                 seek = ComputeSeek(path[0]._FworldPosition, true);
         }
 
+        // If no path, go directly to target position
         else
             seek = ComputeSeek(parentSquad.GetFPosition(), true);
 
-        // Desired velocity
+        // Set desired velocity
         FdirectionVelocity = seek;
-        if(!isLeader)
-        {
-            AddSteeringForce(seek, FInt.FromParts(0, 800));
 
-            FPoint seekLeader = ComputeSeek(parentSquad.leader, false);
-            AddSteeringForce(seekLeader, FInt.FromParts(0, 200));
-
-            FPoint seperation = ComputeSeperation(friendlyActorsClose);
-            AddSteeringForce(seperation, FInt.FromParts(0, 700));
-        }
-
-        else
+        // Leader ignores other units in squad
+        if (isLeader)
         {
             AddSteeringForce(seek, FInt.FromParts(1, 0));
         }
 
+        else
+        {
+            // Follow path...
+            AddSteeringForce(seek, FInt.FromParts(0, 800));
+
+            // ...but also stick to leader for cohesion with group
+            FPoint seekLeader = ComputeSeek(parentSquad.leader, false);
+            AddSteeringForce(seekLeader, FInt.FromParts(0, 200));
+
+            // Avoid other units in squad
+            FPoint seperation = ComputeSeperation(friendlyActorsClose);
+            AddSteeringForce(seperation, FInt.FromParts(0, 700));
+        }
+
+        // Only calculate this if we know there are enemies close by
         if(!canFindNewTarget)
         {
             FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
@@ -313,19 +331,33 @@ public class Unit : Boid, LockStep
     {
         float scale = 1f;
 
-        // Moving and merged with squad
-        // Or is leader
         if (currentState == UNIT_STATES.MOVE)
         {
-            if (parentSquad.faceDir == 1)
+            if(mergingWithSquad)
             {
-                transform.localScale = new Vector3(scale, scale, 1f);
+                if (Fpos.X < parentSquad.GetFPosition().X)
+                {
+                    transform.localScale = new Vector3(scale, scale, 1f);
+                }
+
+                else if (Fpos.X > parentSquad.GetFPosition().X)
+                {
+                    transform.localScale = new Vector3(-scale, scale, 1f);
+                }
+            }
+            else
+            {
+                if (parentSquad.faceDir == 1)
+                {
+                    transform.localScale = new Vector3(scale, scale, 1f);
+                }
+
+                else if (parentSquad.faceDir == -1)
+                {
+                    transform.localScale = new Vector3(-scale, scale, 1f);
+                }
             }
 
-            else if (parentSquad.faceDir == -1)
-            {
-                transform.localScale = new Vector3(-scale, scale, 1f);
-            }
         }
 
         else if (targetEnemy != null)
@@ -355,7 +387,7 @@ public class Unit : Boid, LockStep
 
     protected void ExecuteMovement()
     {
-        // Other units can keep up with Leader
+        // Other units should be able to keep up with leader
         if(isLeader)
         {
             Fvelocity.X = Fvelocity.X * FInt.FromParts(0, 600);
@@ -406,6 +438,7 @@ public class Unit : Boid, LockStep
             steer = FPoint.VectorMultiply(steer, moveSpeed);
             steer = FPoint.VectorMultiply(steer, (dist / desiredSlowArea));
 
+            // Reaching squad target destination
             if (dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
                 currentState = UNIT_STATES.IDLE;
@@ -471,12 +504,15 @@ public class Unit : Boid, LockStep
             {
                 if(actors[i].playerID == playerID)
                 {
-                    if(actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
+                    // Reaching squad target destination (based on other units having reached it
+                    // Not every single unit can reach the same point
+                    if (actors[i].GetComponent<Unit>().currentState == UNIT_STATES.IDLE)
                     {
                         currentState = UNIT_STATES.IDLE;
                         Fvelocity = FidleVelocity;
                     }
 
+                    // We reached squad, so we are no longer merging with it
                     if(mergingWithSquad && !actors[i].GetComponent<Unit>().mergingWithSquad)
                         mergingWithSquad = false;
                 }
@@ -559,7 +595,7 @@ public class Unit : Boid, LockStep
             else
             {
                 FInt dist = GetDistanceToFActor(enemyActorsClose[i]);
-                if (dist < FInt.Create(3) && dist < shortestDistance)
+                if (dist < FradiusDetectEnemy && dist < shortestDistance)
                 {
                     shortestDistance = dist;
                     targetEnemy = enemyActorsClose[i];
@@ -572,7 +608,7 @@ public class Unit : Boid, LockStep
     {
         // This is reset every time a move command is given
         // Don't chase or attack anyone unless true
-        if (canFindNewTarget)
+        if (canFindNewTarget && parentSquad.leader != null)
         {
             FPoint FAttackPoint = FPoint.VectorAdd(GetFPosition(), FdirectionVelocity);
             if (LineIntersectsObstacle(FAttackPoint, targetEnemy))
@@ -598,11 +634,7 @@ public class Unit : Boid, LockStep
 
     void Attack()
     {
-        // Trigger attack anim
-
         Unit unitScript = targetEnemy.GetComponent<Unit>();
-
-        // Damage target enemy
         unitScript.Damage(parentSquad.unitAttackDamage);
     }
 
@@ -626,12 +658,12 @@ public class Unit : Boid, LockStep
 
         health.Destroy();
 
-        Invoke("Destroy", 1.5f); // TODO: get death anim duration
-        
         // Trigger Kill animation
+
+        Invoke("Destroy", 1.0f); // TODO: get death anim duration
     }
 
-    void FindUnitsCloseAllied()
+    void FindCloseFriendlyUnits()
     {
         if (currentStandingNode == null)
             return;
@@ -654,7 +686,7 @@ public class Unit : Boid, LockStep
         }
     }
 
-    void FindUnitsCloseEnemy()
+    void FindCloseEnemyUnits()
     {
         if (currentStandingNode == null)
             return;
@@ -670,7 +702,6 @@ public class Unit : Boid, LockStep
                     if (neighbours[n].actorsStandingHere[i].playerID != playerID)
                         enemyActorsClose.Add(neighbours[n].actorsStandingHere[i]);
                 }
-
             }
         }
     }

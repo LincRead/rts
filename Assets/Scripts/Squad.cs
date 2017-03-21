@@ -33,7 +33,8 @@ public class Squad : Boid, LockStep {
     // Find closest target and set as leader of squad
     [HideInInspector]
     public Unit leader;
-    FInt closetDistUnitToTarget;
+
+    FInt closestDistToEnemyUnit;
     FInt minDistClosestUnitToTarget = FInt.FromParts(0, 320);
 
     GameController gameController;
@@ -54,8 +55,8 @@ public class Squad : Boid, LockStep {
         spriteRenderer.enabled = false;
 
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
-
         gold = GetComponent<Gold>();
+
         InitUnits(numStartingUnits);
         FindNewLeader();
 
@@ -97,7 +98,7 @@ public class Squad : Boid, LockStep {
                 // Check if any units on target node belongs to an enemy unit
                 bool enemyIsStandingOnNode = false;
 
-                List<Node> nodesToCheck = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>().GetNeighbours(node);
+                List<Node> nodesToCheck = new List<Node>(); // = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>().GetNeighbours(node);
                 nodesToCheck.Add(node);
 
                 for (int i = 0; i < nodesToCheck.Count; i++)
@@ -121,7 +122,7 @@ public class Squad : Boid, LockStep {
                 else
                     cind.ActivateMoveSprite(mousePosition);
 
-                if (closetDistUnitToTarget >= minDistClosestUnitToTarget || enemyIsStandingOnNode)
+                if (closestDistToEnemyUnit >= minDistClosestUnitToTarget || enemyIsStandingOnNode)
                 {
                     if (gameController.IsMultiplayer())
                     {
@@ -214,15 +215,15 @@ public class Squad : Boid, LockStep {
     Unit CalculateClosestUnitToNode()
     {
         Unit closestUnit = null;
-        closetDistUnitToTarget = FInt.Create(1000);
+        closestDistToEnemyUnit = FInt.Create(1000);
 
         // Find unit closest to target
         for (int i = 0; i < units.Count; i++)
         {
             FInt dist = GetDistanceToFActor(units[i]);
-            if (dist < closetDistUnitToTarget)
+            if (dist < closestDistToEnemyUnit)
             {
-                closetDistUnitToTarget = dist;
+                closestDistToEnemyUnit = dist;
 
                 // Don't pick units who are not yet merged with squad as leader
                 if(!units[i].IsMergingWithSquad() || leader == null)
