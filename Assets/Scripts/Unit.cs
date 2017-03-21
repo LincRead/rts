@@ -316,31 +316,14 @@ public class Unit : Boid, LockStep
         // Or is leader
         if (currentState == UNIT_STATES.MOVE)
         {
-            if (!mergingWithSquad || isLeader)
+            if (parentSquad.faceDir == 1)
             {
-                if (parentSquad.faceDir == 1)
-                {
-                    transform.localScale = new Vector3(scale, scale, 1f);
-                }
-
-                else if (parentSquad.faceDir == -1)
-                {
-                    transform.localScale = new Vector3(-scale, scale, 1f);
-                }
+                transform.localScale = new Vector3(scale, scale, 1f);
             }
 
-            // Moving to merge with squad
-            else if (parentSquad.leader != null)
+            else if (parentSquad.faceDir == -1)
             {
-                if (Fpos.X < parentSquad.leader.GetFPosition().X)
-                {
-                    transform.localScale = new Vector3(scale, scale, 1f);
-                }
-
-                else if (Fpos.X > parentSquad.leader.GetFPosition().X)
-                {
-                    transform.localScale = new Vector3(-scale, scale, 1f);
-                }
+                transform.localScale = new Vector3(-scale, scale, 1f);
             }
         }
 

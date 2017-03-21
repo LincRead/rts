@@ -167,23 +167,29 @@ public class Squad : Boid, LockStep {
             return;
 
         FAverageUnitFVelocity = FPoint.Create();
+        int numUnitsCounted = 0;
         for (int i = 0; i < units.Count; i++)
         {
             if(units[i] == leader)
             {
                 FAverageUnitFVelocity.X += units[i].GetFVelocity().X * 2;
                 FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y * 2;
+                numUnitsCounted++;
             }
 
             else if(!units[i].IsMergingWithSquad())
             {
                 FAverageUnitFVelocity.X += units[i].GetFVelocity().X;
                 FAverageUnitFVelocity.Y += units[i].GetFVelocity().Y;
+                numUnitsCounted++;
             }
         }
 
-        FAverageUnitFVelocity.X = FAverageUnitFVelocity.X / units.Count;
-        FAverageUnitFVelocity.Y = FAverageUnitFVelocity.Y / units.Count;
+        if (numUnitsCounted == 0)
+            return;
+
+        FAverageUnitFVelocity.X = FAverageUnitFVelocity.X / numUnitsCounted;
+        FAverageUnitFVelocity.Y = FAverageUnitFVelocity.Y / numUnitsCounted;
 
         if (FAverageUnitFVelocity.X > FInt.FromParts(0, 100))
             faceDir = 1;
@@ -193,14 +199,6 @@ public class Squad : Boid, LockStep {
 
     public void FindNewLeader()
     {
-        if (units.Count == 1)
-        {
-            leader = units[0];
-            leader.isLeader = true;
-            leader.CancelMergingWithSquad();
-            return;
-        }
-
         // Tell old leader his or her leadership is over
         if (leader != null)
             leader.GetComponent<Unit>().isLeader = false;
@@ -227,8 +225,11 @@ public class Squad : Boid, LockStep {
                 closetDistUnitToTarget = dist;
 
                 // Don't pick units who are not yet merged with squad as leader
-                if(!units[i].IsMergingWithSquad())
+                if(!units[i].IsMergingWithSquad() || leader == null)
+                {
                     closestUnit = units[i];
+                    closestUnit.CancelMergingWithSquad();
+                }
             }
         }
 

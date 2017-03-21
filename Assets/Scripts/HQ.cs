@@ -28,7 +28,10 @@ public class HQ : FActor {
                     GameObject spawnedUnit = GameObject.Instantiate(
                         unitPrefab,
                         // Make sure units don't spawn at the exact same position, or selse seperation steering won't work
-                        transform.position + new Vector3(0.0f + (0.2f * squads[i].GetComponent<Squad>().GetMergingUnits()), -2f - (0.2f * squads[i].GetComponent<Squad>().GetMergingUnits()), 0.0f),
+                        transform.position + new Vector3(
+                            (FPoint.Sin(FInt.FromFloat(squads[i].GetComponent<Squad>().GetMergingUnits() * 1)) * FInt.FromParts(1, 0)).ToFloat(),
+                            ((FInt.Create(3) * -1) + (FPoint.Cos(FInt.FromFloat(squads[i].GetComponent<Squad>().GetMergingUnits())) * FInt.FromParts(0, 100))).ToFloat(),
+                            0.0f),
                         Quaternion.identity) as GameObject;
 
                     squads[i].GetComponent<Squad>().AddUnit(spawnedUnit.GetComponent<Unit>());
