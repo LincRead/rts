@@ -49,7 +49,7 @@ public class Grid : MonoBehaviour
         FmaxX = FInt.FromFloat((gridSizeX / 2) * nodeDiameter);
         FminY = FInt.FromFloat(-(gridSizeY / 2) * nodeDiameter);
         FmaxY = FInt.FromFloat((gridSizeY / 2) * nodeDiameter);
-        CreateGrid();
+        CreatePathfindingGrid();
     }
 
     public int MaxSize
@@ -60,7 +60,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    void CreateGrid()
+    void CreatePathfindingGrid()
     {
         nodes = new Node[gridSizeX, gridSizeY];
 

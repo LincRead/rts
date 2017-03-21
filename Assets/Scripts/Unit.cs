@@ -133,7 +133,9 @@ public class Unit : Boid, LockStep
         FindCloseEnemyUnits();
 
         // Find new target enemy
-        FindNewTargetEnemy();
+        // Don't find new target if already attacking!
+        if (currentState != UNIT_STATES.ATTACKING)
+            FindNewTargetEnemy();
 
         // Found target enemy
         if(targetEnemy != null)
