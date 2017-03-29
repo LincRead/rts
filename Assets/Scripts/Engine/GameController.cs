@@ -41,7 +41,7 @@ public class GameController : MonoBehaviour
     private bool multiplayer = false;
 
     List<Squad> squads = new List<Squad>(12);
-    GameObject[] obstacles = new GameObject[0];
+    List<FActor> obstacles = new List<FActor>();
 
     // Todo: make dynamic based on players connected to game
     private int numPlayers = 2;
@@ -54,7 +54,6 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-
         networkManager = GetComponent<NetworkManager>();
         inputHoveringUI = GetComponent<InputHoveringUI>();
         cameraRTS = Camera.main.GetComponent<CameraRTS>();
@@ -64,7 +63,10 @@ public class GameController : MonoBehaviour
         for(int i = 0; i < squadPrefabs.Length; i++)
             squads.Add(squadPrefabs[i].GetComponent<Squad>());
 
-        obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+
+        GameObject[] obstaclePrefabs = GameObject.FindGameObjectsWithTag("Obstacle");
+        for (int i = 0; i < obstaclePrefabs.Length; i++)
+            obstacles.Add(obstaclePrefabs[i].GetComponent<FActor>());
 
         for (int i = 0; i < numPlayers; i++)
             playersReady[i] = false;
@@ -108,8 +110,8 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < squads.Count; i++)
             squads[i].LockStepUpdate();
 
-        for (int i = 0; i < obstacles.Length; i++)
-            obstacles[i].GetComponent<FActor>().LockStepUpdate();
+        for (int i = 0; i < obstacles.Count; i++)
+            obstacles[i].LockStepUpdate();
     }
 
     void RunCommunicationTurn()
@@ -256,6 +258,11 @@ public class GameController : MonoBehaviour
     public Squad GetSquadLocalPlayer()
     {
         return squads[playerID];
+    }
+
+    public List<FActor> GetObstacles()
+    {
+        return obstacles;
     }
 
     public bool IsMultiplayer()

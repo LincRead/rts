@@ -14,6 +14,7 @@ public class FActor : MonoBehaviour, LockStep
 
     protected FInt FlargeNumber = FInt.Create(1000); // Memory
 
+    protected Transform myTransform;
     protected SpriteRenderer spriteRenderer;
 
     protected virtual void Awake()
@@ -23,7 +24,9 @@ public class FActor : MonoBehaviour, LockStep
 
     protected virtual void Start()
     {
+        myTransform = GetComponent<Transform>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
         Fpos.X = FInt.FromFloat(transform.localPosition.x);
         Fpos.Y = FInt.FromFloat(transform.localPosition.y);
         FboundingRadius = FInt.FromFloat(boundingRadius);

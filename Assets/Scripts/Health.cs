@@ -21,6 +21,7 @@ public class Health : MonoBehaviour {
     Transform regenIconTransform;
 
     float healthBarDefaultWidth = 0.0f;
+    float scaleX = 1.0f;
 
     bool belongsToEnemyUnit = false;
 
@@ -32,6 +33,8 @@ public class Health : MonoBehaviour {
     FInt maxHitpoints = FInt.Create(0);
     FInt hitpoints = FInt.Create(0);
     FInt zeroHitpoints = FInt.Create(0);
+
+    bool changedHitPoints = true;
 
     void Awake () {
         healthBarOutlineInstance = GameObject.Instantiate(healthBarOutlinePrefab,
@@ -46,9 +49,6 @@ public class Health : MonoBehaviour {
 
         healthBarOutlineSpriteRenderer = healthBarOutlineInstance.GetComponent<SpriteRenderer>();
         healthBarOutlineSpriteRenderer.enabled = false;
-
-        healthBarTransform = healthBarInstance.GetComponent<Transform>();
-        healthBarOutlineTransform = healthBarOutlineInstance.GetComponent<Transform>();
 
         healthBarDefaultWidth = healthBarSpriteRenderer.bounds.size.x;
 
@@ -67,25 +67,28 @@ public class Health : MonoBehaviour {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
     }
 
+    void Start()
+    {
+        healthBarTransform = healthBarInstance.GetComponent<Transform>();
+        healthBarOutlineTransform = healthBarOutlineInstance.GetComponent<Transform>();
+    }
+
     void Update()
     {
-        if(maxHitpoints != 0 && healthBarTransform != null)
+        if (changedHitPoints) // Only re-calculate scaling if anything changed
         {
-            float scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
+            scaleX = ((float)hitpoints / maxHitpoints.ToFloat());
             healthBarTransform.localScale = new Vector3(scaleX * 1f, 1.0f, 0.0f);
-
-            healthBarOutlineTransform.position = new Vector3(transform.position.x, transform.position.y + spriteRenderer.bounds.size.y + offsetY, transform.position.z);
-
-            healthBarTransform.position = new Vector3(
-                healthBarOutlineTransform.position.x - (((healthBarDefaultWidth / 2) * (1 - scaleX))),
-                healthBarOutlineTransform.position.y,
-                healthBarOutlineTransform.position.z);
-
-            if (belongsToEnemyUnit)
-                healthBarSpriteRenderer.color = Color.red;
-            else
-                healthBarSpriteRenderer.color = Color.green;
         }
+
+        healthBarOutlineTransform.position = new Vector3(transform.position.x, transform.position.y + spriteRenderer.bounds.size.y + offsetY, transform.position.z);
+
+        healthBarTransform.position = new Vector3(
+            healthBarOutlineTransform.position.x - (((healthBarDefaultWidth / 2) * (1 - scaleX))),
+            healthBarOutlineTransform.position.y,
+            healthBarOutlineTransform.position.z);
+
+        changedHitPoints = false;
     }
 
     public void Regenerate()
@@ -141,11 +144,17 @@ public class Health : MonoBehaviour {
             healthBarOutlineSpriteRenderer.enabled = false;
         }
 
+        changedHitPoints = true;
     }
 
     public void SetBelongsToEnemyUnit(bool isEnemy)
     {
         belongsToEnemyUnit = isEnemy;
+
+        if (belongsToEnemyUnit)
+            healthBarSpriteRenderer.color = Color.red;
+        else
+            healthBarSpriteRenderer.color = Color.green;
     }
 
     public void SetMaxHitpoints(int maxHP) {
@@ -169,5 +178,6 @@ public class Health : MonoBehaviour {
         Destroy(healthBarInstance.gameObject);
         Destroy(healthBarOutlineInstance.gameObject);
         Destroy(regenIconInstance.gameObject);
+        Destroy(gameObject);
     }
 }

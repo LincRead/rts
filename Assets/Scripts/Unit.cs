@@ -46,7 +46,7 @@ public class Unit : Boid, LockStep
 
     List<FActor> friendlyActorsClose = new List<FActor>(30);
     List<FActor> enemyActorsClose = new List<FActor>(30);
-    List<FActor> obstacles = new List<FActor>(20);
+    List<FActor> obstacles;
     List<Node> neighbours = new List<Node>();
 
     // Health
@@ -66,21 +66,15 @@ public class Unit : Boid, LockStep
 
         animator = GetComponent<Animator>();
         health = GetComponent<Health>();
+        obstacles = GameController.Manager.GetObstacles();
+
+        // Get from somewhere else
+        // Costly to call find()
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
         if (health == null)
             Debug.LogError("Unit always needs a Health script atftached");
     } 
-
-    protected override void Start()
-    {
-        base.Start();
-
-        // Todo don't need to store all obstacles here, can do it in squad or GameController and fetch them
-        GameObject[] obstaclesArray = GameObject.FindGameObjectsWithTag("Obstacle");
-        for (var i = 0; i < obstaclesArray.Length; i++)
-            obstacles.Add(obstaclesArray[i].GetComponent<FActor>());
-    }
 
     public void SetSquad(Squad squad)
     {
@@ -98,18 +92,21 @@ public class Unit : Boid, LockStep
     }
 
     float currentLerpTime = 0.0f;
-    float lerpTime = 0.3f;
+    float lerpTime = .3f;
+    float t;
     void SmoothMovement()
     {
         currentLerpTime += Time.deltaTime;
-        if (currentLerpTime >= lerpTime)
+        if (currentLerpTime > lerpTime)
             currentLerpTime = lerpTime;
 
-        float t = currentLerpTime / lerpTime;
-        t = Mathf.Sin(t * Mathf.PI * 0.5f);
+        t = currentLerpTime / lerpTime;
 
-        transform.position = Vector3.Lerp(
-            transform.position,
+        // Remove for optimization
+        //t = Mathf.Sin(t * 3.14f * 0.5f);
+
+        myTransform.position = Vector3.Lerp(
+            myTransform.position,
             GetRealPosToVector3(),
             t
         );
@@ -154,9 +151,13 @@ public class Unit : Boid, LockStep
         HandleCurrentState();
         AvoidObstacles();  // ALWAYS avoid obstacles
         HandleAnimations();
-        HandleFaceDir();
-        ExecuteMovement();
-        Debug.DrawLine(new Vector2(Fpos.X.ToFloat(), Fpos.Y.ToFloat()), new Vector2(Fpos.X.ToFloat() + Fvelocity.X.ToFloat(), Fpos.Y.ToFloat() + +Fvelocity.Y.ToFloat()));
+
+        // Don't calculate movement execution if standing still
+        if(Fvelocity.X != 0 || Fvelocity.Y != 0)
+        {
+            HandleFaceDir();
+            ExecuteMovement();
+        }
     }
 
     public void MoveToTarget()
@@ -165,6 +166,10 @@ public class Unit : Boid, LockStep
         currentState = UNIT_STATES.MOVE;
         canCancelAttack = true;
         canFindNewTarget = false;
+
+        if (path != null)
+            path.Clear(); // Clear so we find a new path
+
         Invoke("CanFindNewTarget", 1f); // Todo lockstep
     }
 
@@ -206,11 +211,6 @@ public class Unit : Boid, LockStep
         FPoint seperation = ComputeSeperation(friendlyActorsClose);
         AddSteeringForce(seperation, FInt.FromParts(0, 700));
 
-        // Find a way around friendly units
-        // Too much resources spent on this one!!!
-        //FPoint avoidance = ComputeObstacleAvoidance(friendlyActorsClose);
-        //AddSteeringForce(avoidance, FInt.FromParts(0, 200));
-
         // Don't move through enemy units
         FPoint seperationEnemyUnits = ComputeSeperation(enemyActorsClose);
         AddSteeringForce(seperationEnemyUnits, FInt.FromParts(1, 0));
@@ -245,7 +245,6 @@ public class Unit : Boid, LockStep
         if (leader == null)
             return;
 
-        List<Node> newPath;
         Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
         FPoint seek = FidleVelocity;
 
@@ -253,28 +252,33 @@ public class Unit : Boid, LockStep
 
         int maxOffset = 1;
 
-        int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - leader.GetCurrentNode().gridPosX;
-        int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - leader.GetCurrentNode().gridPosY;
+        if(path == null || path.Count == 0)
+        {
+            List<Node> newPath = new List<Node>();
 
-        if (nodeOffsetFromLeaderNodeX < -maxOffset) nodeOffsetFromLeaderNodeX = -maxOffset;
-        if (nodeOffsetFromLeaderNodeX > maxOffset) nodeOffsetFromLeaderNodeX = maxOffset;
+            int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - leader.GetCurrentNode().gridPosX;
+            int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - leader.GetCurrentNode().gridPosY;
 
-        if (nodeOffsetFromLeaderNodeY < -maxOffset) nodeOffsetFromLeaderNodeY = -maxOffset;
-        if (nodeOffsetFromLeaderNodeY > maxOffset) nodeOffsetFromLeaderNodeY = maxOffset;
+            if (nodeOffsetFromLeaderNodeX < -maxOffset) nodeOffsetFromLeaderNodeX = -maxOffset;
+            if (nodeOffsetFromLeaderNodeX > maxOffset) nodeOffsetFromLeaderNodeX = maxOffset;
 
-        Node myTargetNode = pathFinding.GetNodeFromGridPos(
-            leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
-            leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
+            if (nodeOffsetFromLeaderNodeY < -maxOffset) nodeOffsetFromLeaderNodeY = -maxOffset;
+            if (nodeOffsetFromLeaderNodeY > maxOffset) nodeOffsetFromLeaderNodeY = maxOffset;
 
-        // If node is unwalkable, go to same node as leader
-        if (myTargetNode.walkable)
-            newPath = pathFinding.FindPath(myTargetNode);
-        else
-            newPath = pathFinding.FindPath(leaderTargetNode);
+            Node myTargetNode = pathFinding.GetNodeFromGridPos(
+                leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
+                leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
 
-        // Set path to follow
-        if (newPath != null)
-            path = newPath;
+            // If node is unwalkable, go to same node as leader
+            if (myTargetNode.walkable)
+                newPath = pathFinding.FindPath(myTargetNode);
+            else
+                newPath = pathFinding.FindPath(leaderTargetNode);
+
+            // Set path to follow
+            if (newPath != null)
+                path = newPath;
+        }
 
         // Follow path if path exists
         if (path != null && path.Count > 0)
@@ -287,7 +291,7 @@ public class Unit : Boid, LockStep
         }
 
         // If no path, go directly to target position
-        else
+        if (path == null || path.Count == 0)
             seek = ComputeSeek(parentSquad.GetFPosition(), true);
 
         // Set desired velocity
@@ -449,6 +453,7 @@ public class Unit : Boid, LockStep
             if (dist < desiredSlowArea / 2 && currentState != UNIT_STATES.ATTACKING)
             {
                 Idle();
+                return Fvelocity;
             }
         }
 
@@ -513,7 +518,7 @@ public class Unit : Boid, LockStep
 
                     // Reaching squad target destination (based on other units having reached it
                     // Not every single unit can reach the same point
-                    if (unit.currentState == UNIT_STATES.IDLE)
+                    if (unit.currentState == UNIT_STATES.IDLE && !unit.mergingWithSquad)
                     {
                         Idle();
                     }
