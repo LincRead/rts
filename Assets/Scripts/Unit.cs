@@ -152,10 +152,11 @@ public class Unit : Boid, LockStep
         AvoidObstacles();  // ALWAYS avoid obstacles
         HandleAnimations();
 
+        HandleFaceDir();
+
         // Don't calculate movement execution if standing still
-        if(Fvelocity.X != 0 || Fvelocity.Y != 0)
+        if (Fvelocity.X != 0 || Fvelocity.Y != 0)
         {
-            HandleFaceDir();
             ExecuteMovement();
         }
     }
