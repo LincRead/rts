@@ -58,7 +58,7 @@ public class Unit : Boid, LockStep
     bool canCancelAttack = true;
 
     // Steering values
-    FInt desiredSeparation = FInt.FromParts(0, 270);
+    FInt desiredSeparation = FInt.FromParts(0, 220);
 
     protected override void Awake()
     {
@@ -238,60 +238,74 @@ public class Unit : Boid, LockStep
         // Doesnt't really do anything other than waiting for animation to finish...
     }
 
+    Node FindTargetNodeWithOffset(Node leaderTargetNode)
+    {
+        int maxOffset = 1;
+
+        int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - parentSquad.leader.GetCurrentNode().gridPosX;
+        int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - parentSquad.leader.GetCurrentNode().gridPosY;
+
+        if (nodeOffsetFromLeaderNodeX < -maxOffset) nodeOffsetFromLeaderNodeX = -maxOffset;
+        if (nodeOffsetFromLeaderNodeX > maxOffset) nodeOffsetFromLeaderNodeX = maxOffset;
+
+        if (nodeOffsetFromLeaderNodeY < -maxOffset) nodeOffsetFromLeaderNodeY = -maxOffset;
+        if (nodeOffsetFromLeaderNodeY > maxOffset) nodeOffsetFromLeaderNodeY = maxOffset;
+
+        return pathFinding.GetNodeFromGridPos(
+            leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
+            leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
+    }
+
+    void FindNewPath()
+    {
+        Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
+        List<Node> newPath = new List<Node>();
+        Node myTargetNode = FindTargetNodeWithOffset(leaderTargetNode);
+
+        // If node is unwalkable, go to same node as leader
+        if (myTargetNode.walkable)
+            newPath = pathFinding.FindPath(myTargetNode);
+        else
+            newPath = pathFinding.FindPath(leaderTargetNode);
+
+        // Set path to follow
+        if (newPath != null)
+            path = newPath;
+    }
+
     void HandleMovingToTarget()
     {
         // Move to target if leader exists
-        Unit leader = parentSquad.leader;
-        if (leader == null)
+        if (parentSquad.leader == null)
             return;
 
-        Node leaderTargetNode = pathFinding.GetNodeFromPoint(parentSquad.GetRealPosToVector3());
         FPoint seek = FidleVelocity;
-
         Fvelocity = FidleVelocity;
-
-        int maxOffset = 1;
 
         if(path == null || path.Count == 0)
         {
-            List<Node> newPath = new List<Node>();
-
-            int nodeOffsetFromLeaderNodeX = pathFinding.currentStandingOnNode.gridPosX - leader.GetCurrentNode().gridPosX;
-            int nodeOffsetFromLeaderNodeY = pathFinding.currentStandingOnNode.gridPosY - leader.GetCurrentNode().gridPosY;
-
-            if (nodeOffsetFromLeaderNodeX < -maxOffset) nodeOffsetFromLeaderNodeX = -maxOffset;
-            if (nodeOffsetFromLeaderNodeX > maxOffset) nodeOffsetFromLeaderNodeX = maxOffset;
-
-            if (nodeOffsetFromLeaderNodeY < -maxOffset) nodeOffsetFromLeaderNodeY = -maxOffset;
-            if (nodeOffsetFromLeaderNodeY > maxOffset) nodeOffsetFromLeaderNodeY = maxOffset;
-
-            Node myTargetNode = pathFinding.GetNodeFromGridPos(
-                leaderTargetNode.gridPosX + nodeOffsetFromLeaderNodeX,
-                leaderTargetNode.gridPosY + nodeOffsetFromLeaderNodeY);
-
-            // If node is unwalkable, go to same node as leader
-            if (myTargetNode.walkable)
-                newPath = pathFinding.FindPath(myTargetNode);
-            else
-                newPath = pathFinding.FindPath(leaderTargetNode);
-
-            // Set path to follow
-            if (newPath != null)
-                path = newPath;
+            FindNewPath();
         }
 
-        // Follow path if path exists
+        // Check if we have reached next target node
         if (path != null && path.Count > 0)
         {
             if (GetDistanceBetweenPoints(path[0]._FworldPosition, GetFPosition()) < FInt.FromParts(0, 500))
+            {
                 path.RemoveAt(0);
 
-            if (path.Count > 0)
-                seek = ComputeSeek(path[0]._FworldPosition, true);
+                if(path.Count > 0)
+                    FindNewPath();
+            }
         }
 
-        // If no path, go directly to target position
-        if (path == null || path.Count == 0)
+        // Follow path if path still exists
+        if (path != null && path.Count > 0)
+        {
+            seek = ComputeSeek(path[0]._FworldPosition, true);
+        }
+
+        else
             seek = ComputeSeek(parentSquad.GetFPosition(), true);
 
         // Set desired velocity
@@ -340,7 +354,7 @@ public class Unit : Boid, LockStep
 
     void HandleFaceDir()
     {
-        float scale = 1.0f;
+        float scale = 0.8f;
 
         if (currentState == UNIT_STATES.MOVE)
         {
