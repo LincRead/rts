@@ -57,9 +57,6 @@ public class Unit : Boid, LockStep
     int ticksSinceLastAttack = 0;
     bool canCancelAttack = true;
 
-    // Steering values
-    FInt desiredSeparation = FInt.FromParts(0, 220);
-
     protected override void Awake()
     {
         base.Awake();
@@ -264,7 +261,7 @@ public class Unit : Boid, LockStep
         Node myTargetNode = FindTargetNodeWithOffset(leaderTargetNode);
 
         // If node is unwalkable, go to same node as leader
-        if (myTargetNode.walkable)
+        if (myTargetNode != null && myTargetNode.walkable)
             newPath = pathFinding.FindPath(myTargetNode);
         else
             newPath = pathFinding.FindPath(leaderTargetNode);
@@ -523,14 +520,14 @@ public class Unit : Boid, LockStep
 
         for (int i = 0; i < actors.Count; i++)
         {
+            Unit unit = actors[i].GetComponent<Unit>();
+
             FInt dist = GetDistanceToFActor(actors[i]);
 
-            if (dist > 0 && dist < desiredSeparation)
+            if (dist > 0 && dist < GetFBoundingRadius())
             {
                 if(actors[i].playerID == playerID)
                 {
-                    Unit unit = actors[i].GetComponent<Unit>();
-
                     // Reaching squad target destination (based on other units having reached it
                     // Not every single unit can reach the same point
                     if (unit.currentState == UNIT_STATES.IDLE && !unit.mergingWithSquad)
