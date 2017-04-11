@@ -1,2 +1,2 @@
 # rts
-Squad-based RTS for mobile platforms.
+Experimenting with squad-based game mechanics for an RTS to run on mobile platforms.
