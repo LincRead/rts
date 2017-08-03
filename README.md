@@ -5,4 +5,4 @@ My approach of using advanced steering behaviour combined with fixed-point arith
 
 Therefore, I scrapped this project.
 
-The behaviour that were implemented looked really fantastic though.
+The behaviours that were implemented looked really fantastic though.
