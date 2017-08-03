@@ -5,4 +5,4 @@ My approach on using advanced steering behaviour combined with fixed-point arith
 
 One example of a bottleneck I encountered, was calculating linear distance between units using fixed-point numbers.
 
-The behaviours that were implemented looked really fantastic though.
+The behaviours that were implemented looks really fantastic though.
